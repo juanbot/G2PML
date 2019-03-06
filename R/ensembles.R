@@ -218,6 +218,12 @@ ensembleLearnAutonomous  = function(genes,
   cat("Controls:",controls,"\n")
   cat("expID:",expID,"\n")
 
+  methods = unlist(lapply(methods,
+                          function(x){ tryCatch({ checkInstall(getModelInfo(x)$library); return(x)},
+                                                error = function(e){ print(e); NULL },0)}))
+
+  cat(paste0("Available methods to use are ",paste0(methods,collapse=", ")),"\n")
+
   if(is.null(vars)){
     if(!is.null(fsfile)){
       vars = fsGetVars(file=fsfile)
