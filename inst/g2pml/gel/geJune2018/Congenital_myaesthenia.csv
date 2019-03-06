@@ -1,0 +1,30 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","AGRN","HighEvidence","biallelic",NA
+"2","CHAT","HighEvidence","biallelic",NA
+"3","CHRNA1","HighEvidence","monoallelic_and_biallelic","Other - please provide details in the comments"
+"4","CHRNB1","HighEvidence","monoallelic_and_biallelic","Other - please provide details in the comments"
+"5","CHRND","HighEvidence","monoallelic_and_biallelic","Other - please provide details in the comments"
+"6","CHRNE","HighEvidence","monoallelic_and_biallelic",NA
+"7","CHRNG","HighEvidence","biallelic",NA
+"8","COL13A1","HighEvidence","biallelic",NA
+"9","COLQ","HighEvidence","biallelic",NA
+"10","DOK7","HighEvidence","biallelic",NA
+"11","DPAGT1","HighEvidence","biallelic",NA
+"12","GFPT1","HighEvidence","biallelic",NA
+"13","GMPPB","HighEvidence","biallelic",NA
+"14","LRP4","HighEvidence","biallelic",NA
+"15","MUSK","HighEvidence","biallelic",NA
+"16","PLEC","HighEvidence","biallelic",NA
+"17","RAPSN","HighEvidence","biallelic",NA
+"18","SCN4A","HighEvidence","biallelic",NA
+"19","SLC18A3","HighEvidence","biallelic",NA
+"20","SLC5A7","HighEvidence","biallelic",NA
+"21","ALG2","ModerateEvidence","biallelic",NA
+"22","MYO9A","ModerateEvidence","biallelic",NA
+"23","VAMP1","ModerateEvidence","biallelic",NA
+"24","ALG14","LowEvidence","biallelic",NA
+"25","LAMB2","LowEvidence","biallelic",NA
+"26","PREPL","LowEvidence","biallelic",NA
+"27","SNAP25","LowEvidence","monoallelic_not_imprinted",NA
+"28","SYT2","LowEvidence","monoallelic_not_imprinted",NA
+"29","GRN","NoList",NA,NA

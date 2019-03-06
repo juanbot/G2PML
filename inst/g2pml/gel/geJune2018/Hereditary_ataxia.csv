@@ -1,0 +1,160 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","COQ8A","HighEvidence","biallelic",NA
+"2","MRE11","HighEvidence","biallelic",NA
+"3","TWNK","HighEvidence","monoallelic_and_biallelic",NA
+"4","AAAS","HighEvidence","biallelic",NA
+"5","ABCB7","HighEvidence","xlinked_monoallelic",NA
+"6","ABHD12","HighEvidence","biallelic",NA
+"7","AFG3L2","HighEvidence","monoallelic_and_biallelic","Other - please provide details in the comments"
+"8","AMPD2","HighEvidence","biallelic",NA
+"9","ANO10","HighEvidence","biallelic",NA
+"10","AP1S2","HighEvidence","xlinked_monoallelic",NA
+"11","APTX","HighEvidence","biallelic",NA
+"12","ARSA","HighEvidence","biallelic",NA
+"13","ATCAY","HighEvidence","biallelic",NA
+"14","ATM","HighEvidence","biallelic",NA
+"15","ATP1A3","HighEvidence","monoallelic_not_imprinted",NA
+"16","CA8","HighEvidence","biallelic",NA
+"17","CACNA1A","HighEvidence","monoallelic_not_imprinted",NA
+"18","CACNA1G","HighEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype -please provide details in the comments"
+"19","CAMTA1","HighEvidence","monoallelic",NA
+"20","CASK","HighEvidence","xlinked_monoallelic",NA
+"21","CHMP1A","HighEvidence","biallelic",NA
+"22","CLCN2","HighEvidence","monoallelic_and_biallelic",NA
+"23","CLN6","HighEvidence","biallelic",NA
+"24","COX20","HighEvidence","biallelic",NA
+"25","CP","HighEvidence","biallelic",NA
+"26","CWF19L1","HighEvidence","biallelic",NA
+"27","CYP27A1","HighEvidence","biallelic",NA
+"28","CYP2U1","HighEvidence","biallelic",NA
+"29","DARS2","HighEvidence","biallelic",NA
+"30","DDHD2","HighEvidence","biallelic",NA
+"31","DNAJC19","HighEvidence","biallelic",NA
+"32","DNAJC5","HighEvidence","monoallelic_not_imprinted",NA
+"33","DNMT1","HighEvidence","monoallelic_not_imprinted",NA
+"34","EIF2B1","HighEvidence","biallelic",NA
+"35","EIF2B2","HighEvidence","biallelic",NA
+"36","EIF2B3","HighEvidence","biallelic",NA
+"37","EIF2B4","HighEvidence","biallelic",NA
+"38","EIF2B5","HighEvidence","biallelic",NA
+"39","ELOVL4","HighEvidence","monoallelic",NA
+"40","EPM2A","HighEvidence","biallelic",NA
+"41","EXOSC3","HighEvidence","biallelic",NA
+"42","FGF14","HighEvidence","monoallelic",NA
+"43","FLVCR1","HighEvidence","biallelic",NA
+"44","FMR1","HighEvidence","xlinked_monoallelic",NA
+"45","FOLR1","HighEvidence","biallelic",NA
+"46","FXN","HighEvidence","biallelic",NA
+"47","GBA2","HighEvidence","biallelic",NA
+"48","GFAP","HighEvidence","monoallelic",NA
+"49","GJC2","HighEvidence","biallelic",NA
+"50","GOSR2","HighEvidence","biallelic",NA
+"51","GPAA1","HighEvidence","biallelic",NA
+"52","GRID2","HighEvidence","biallelic",NA
+"53","GRM1","HighEvidence","biallelic",NA
+"54","HEXA","HighEvidence","biallelic",NA
+"55","HEXB","HighEvidence","biallelic",NA
+"56","ITPR1","HighEvidence","monoallelic","Other - please provide details in the comments"
+"57","KCNA1","HighEvidence","monoallelic",NA
+"58","KCNC3","HighEvidence","monoallelic",NA
+"59","KCND3","HighEvidence","monoallelic_not_imprinted",NA
+"60","KCNJ10","HighEvidence","biallelic",NA
+"61","KIF1C","HighEvidence","biallelic",NA
+"62","MARS2","HighEvidence","biallelic",NA
+"63","MMACHC","HighEvidence","biallelic",NA
+"64","MT-ATP6","HighEvidence","mitochondrial",NA
+"65","MTTP","HighEvidence","biallelic",NA
+"66","NHLRC1","HighEvidence","biallelic",NA
+"67","NKX6-2","HighEvidence","biallelic",NA
+"68","NPC1","HighEvidence","biallelic",NA
+"69","NPC2","HighEvidence","biallelic",NA
+"70","OPA3","HighEvidence","biallelic",NA
+"71","OPHN1","HighEvidence","xlinked_monoallelic",NA
+"72","PAX6","HighEvidence","biallelic",NA
+"73","PDYN","HighEvidence","monoallelic",NA
+"74","PEX16","HighEvidence","biallelic",NA
+"75","PLA2G6","HighEvidence","biallelic",NA
+"76","PMPCA","HighEvidence","biallelic",NA
+"77","PNKP","HighEvidence","biallelic",NA
+"78","PNPLA6","HighEvidence","biallelic",NA
+"79","POLG","HighEvidence","monoallelic_and_biallelic",NA
+"80","POLR3A","HighEvidence","biallelic",NA
+"81","PRKCG","HighEvidence","monoallelic",NA
+"82","PRNP","HighEvidence","monoallelic",NA
+"83","PRRT2","HighEvidence","monoallelic",NA
+"84","RARS2","HighEvidence","biallelic",NA
+"85","RNF170","HighEvidence","monoallelic",NA
+"86","RNF216","HighEvidence","biallelic",NA
+"87","SACS","HighEvidence","biallelic",NA
+"88","SAR1B","HighEvidence","biallelic",NA
+"89","SEPSECS","HighEvidence","biallelic",NA
+"90","SETX","HighEvidence","biallelic",NA
+"91","SIL1","HighEvidence","biallelic",NA
+"92","SLC1A3","HighEvidence","monoallelic",NA
+"93","SLC2A1","HighEvidence","monoallelic_and_biallelic",NA
+"94","SLC9A6","HighEvidence","xlinked_monoallelic",NA
+"95","SNX14","HighEvidence","biallelic",NA
+"96","SPG7","HighEvidence","biallelic",NA
+"97","SPTBN2","HighEvidence","monoallelic_and_biallelic",NA
+"98","SRD5A3","HighEvidence","biallelic",NA
+"99","STUB1","HighEvidence","biallelic",NA
+"100","SYNE1","HighEvidence","biallelic",NA
+"101","TGM6","HighEvidence","monoallelic",NA
+"102","TMEM240","HighEvidence","monoallelic",NA
+"103","TPP1","HighEvidence","biallelic",NA
+"104","TSEN2","HighEvidence","biallelic",NA
+"105","TSEN54","HighEvidence","biallelic",NA
+"106","TTBK2","HighEvidence","monoallelic",NA
+"107","TTC19","HighEvidence","biallelic",NA
+"108","TTPA","HighEvidence","biallelic",NA
+"109","TUBB4A","HighEvidence","monoallelic","Other - please provide details in the comments "
+"110","VLDLR","HighEvidence","biallelic",NA
+"111","VRK1","HighEvidence","biallelic",NA
+"112","WDR73","HighEvidence","biallelic",NA
+"113","WDR81","HighEvidence","biallelic",NA
+"114","WFS1","HighEvidence","biallelic",NA
+"115","WWOX","HighEvidence","biallelic",NA
+"116","COG5","ModerateEvidence","monoallelic_and_biallelic",NA
+"117","DMXL2","ModerateEvidence","monoallelic_not_imprinted",NA
+"118","MVK","ModerateEvidence","biallelic",NA
+"119","VAMP1","ModerateEvidence","monoallelic",NA
+"120","AARS","LowEvidence","monoallelic",NA
+"121","ALAS2","LowEvidence","xlinked_monoallelic",NA
+"122","ATN1","LowEvidence","Other - please specifiy in evaluation comments","Other - please provide details in the comments"
+"123","ATP2B3","LowEvidence",NA,NA
+"124","ATP8A2","LowEvidence","biallelic",NA
+"125","ATXN1","LowEvidence",NA,"Other - please provide details in the comments"
+"126","ATXN10","LowEvidence",NA,"Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"127","ATXN2","LowEvidence",NA,"Other - please provide details in the comments"
+"128","ATXN3","LowEvidence",NA,"Other - please provide details in the comments"
+"129","ATXN7","LowEvidence",NA,"Other - please provide details in the comments"
+"130","ATXN8","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"131","BEAN1","LowEvidence","monoallelic",NA
+"132","CACNB4","LowEvidence","monoallelic",NA
+"133","CCDC88C","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype -please provide details in the comments"
+"134","CLP1","LowEvidence","biallelic",NA
+"135","CSTB","LowEvidence","biallelic",NA
+"136","DAB1","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"137","DYNC1H1","LowEvidence","monoallelic",NA
+"138","ELOVL5","LowEvidence","monoallelic","Other - please provide details in the comments "
+"139","MTPAP","LowEvidence","biallelic",NA
+"140","NAGLU","LowEvidence","monoallelic_and_biallelic","Other - please provide details in the comments "
+"141","NOP56","LowEvidence","Other - please specifiy in evaluation comments","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"142","PAX2","LowEvidence",NA,NA
+"143","PCLO","LowEvidence","biallelic",NA
+"144","PIK3R5","LowEvidence","biallelic",NA
+"145","PPP2R2B","LowEvidence",NA,"Other - please provide details in the comments"
+"146","PRICKLE1","LowEvidence","biallelic",NA
+"147","RELN","LowEvidence","biallelic",NA
+"148","RUBCN","LowEvidence","biallelic",NA
+"149","SCN8A","LowEvidence","monoallelic",NA
+"150","SYT14","LowEvidence","biallelic",NA
+"151","TBP","LowEvidence",NA,"Other - please provide details in the comments"
+"152","TDP1","LowEvidence","biallelic",NA
+"153","TSEN34","LowEvidence","biallelic",NA
+"154","UBR4","LowEvidence","monoallelic",NA
+"155","UCHL1","LowEvidence","biallelic",NA
+"156","VPS53","LowEvidence","biallelic",NA
+"157","XRCC1","LowEvidence","biallelic",NA
+"158","ZFYVE26","LowEvidence","biallelic",NA
+"159","ZNF592","LowEvidence","biallelic",NA

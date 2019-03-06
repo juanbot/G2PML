@@ -1,0 +1,26 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","ACP5","HighEvidence","biallelic",NA
+"2","ADAR","HighEvidence","monoallelic_and_biallelic",NA
+"3","AP1S2","HighEvidence","xlinked_monoallelic",NA
+"4","COL4A1","HighEvidence","monoallelic_not_imprinted",NA
+"5","CTC1","HighEvidence","biallelic",NA
+"6","CYP2U1","HighEvidence","biallelic",NA
+"7","IFIH1","HighEvidence","monoallelic_not_imprinted",NA
+"8","JAM3","HighEvidence","biallelic",NA
+"9","OCLN","HighEvidence","biallelic",NA
+"10","PDGFB","HighEvidence","monoallelic",NA
+"11","PDGFRB","HighEvidence","monoallelic",NA
+"12","RNASEH2A","HighEvidence","biallelic",NA
+"13","RNASEH2B","HighEvidence","biallelic",NA
+"14","RNASEH2C","HighEvidence","biallelic",NA
+"15","SAMHD1","HighEvidence","biallelic",NA
+"16","SLC20A2","HighEvidence","monoallelic",NA
+"17","TREM2","HighEvidence","biallelic",NA
+"18","TREX1","HighEvidence","monoallelic_and_biallelic",NA
+"19","USP18","HighEvidence","biallelic",NA
+"20","XPR1","HighEvidence","monoallelic_not_imprinted",NA
+"21","ERCC6","LowEvidence","biallelic",NA
+"22","MAT1A","LowEvidence",NA,NA
+"23","PCDH12","LowEvidence","biallelic",NA
+"24","SCN2A","LowEvidence","monoallelic_not_imprinted",NA
+"25","SNORD118","LowEvidence","biallelic","Other - please provide details in the comments"

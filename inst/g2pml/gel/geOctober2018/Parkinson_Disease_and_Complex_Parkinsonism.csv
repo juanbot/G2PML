@@ -1,0 +1,58 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","PRKN","HighEvidence","biallelic",NA
+"2","ATP13A2","HighEvidence","biallelic",NA
+"3","ATP1A3","HighEvidence","monoallelic",NA
+"4","C19orf12","HighEvidence","biallelic",NA
+"5","CSF1R","HighEvidence","monoallelic",NA
+"6","DCTN1","HighEvidence","monoallelic",NA
+"7","DNAJC6","HighEvidence","biallelic",NA
+"8","FBXO7","HighEvidence","biallelic",NA
+"9","FTL","HighEvidence","monoallelic",NA
+"10","GBA","HighEvidence","monoallelic_and_biallelic",NA
+"11","GCH1","HighEvidence","monoallelic_and_biallelic",NA
+"12","GRN","HighEvidence","monoallelic",NA
+"13","LRRK2","HighEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"14","LYST","HighEvidence","biallelic",NA
+"15","MAPT","HighEvidence","monoallelic",NA
+"16","OPA3","HighEvidence","biallelic",NA
+"17","PANK2","HighEvidence","biallelic",NA
+"18","PARK7","HighEvidence","biallelic",NA
+"19","PINK1","HighEvidence","biallelic",NA
+"20","PLA2G6","HighEvidence","biallelic",NA
+"21","PRKRA","HighEvidence","biallelic",NA
+"22","RAB39B","HighEvidence","xlinked_monoallelic",NA
+"23","SLC30A10","HighEvidence","biallelic",NA
+"24","SLC39A14","HighEvidence","biallelic",NA
+"25","SLC6A3","HighEvidence","biallelic",NA
+"26","SNCA","HighEvidence","monoallelic","Other - please provide details in the comments"
+"27","SPG11","HighEvidence","biallelic",NA
+"28","SPR","HighEvidence","biallelic",NA
+"29","SYNJ1","HighEvidence","biallelic",NA
+"30","TH","HighEvidence","biallelic",NA
+"31","TUBB4A","HighEvidence","monoallelic",NA
+"32","VPS13A","HighEvidence","biallelic",NA
+"33","VPS35","HighEvidence","monoallelic",NA
+"34","WDR45","HighEvidence","xlinked_monoallelic",NA
+"35","CHCHD2","ModerateEvidence","monoallelic_not_imprinted",NA
+"36","TAF1","ModerateEvidence","xlinked_monoallelic","Other - please provide details in the comments"
+"37","ANO3","LowEvidence","monoallelic",NA
+"38","ATP6AP2","LowEvidence","xlinked_biallelic",NA
+"39","ATXN2","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"40","ATXN3","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"41","C9orf72","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"42","EIF4G1","LowEvidence","monoallelic",NA
+"43","GIGYF2","LowEvidence",NA,NA
+"44","GNAL","LowEvidence","monoallelic",NA
+"45","HTRA2","LowEvidence","monoallelic",NA
+"46","HTT","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"47","IPPK","LowEvidence","biallelic",NA
+"48","JPH3","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"49","NR4A2","LowEvidence","biallelic",NA
+"50","SGCE","LowEvidence","monoallelic_maternally_imprinted",NA
+"51","SLC41A1","LowEvidence",NA,NA
+"52","SNCAIP","LowEvidence","biallelic",NA
+"53","TBP","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"54","THAP1","LowEvidence","monoallelic",NA
+"55","TOR1A","LowEvidence","monoallelic",NA
+"56","UCHL1","LowEvidence","monoallelic",NA
+"57","EPHB4","NoList",NA,"Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype -please provide details in the comments"

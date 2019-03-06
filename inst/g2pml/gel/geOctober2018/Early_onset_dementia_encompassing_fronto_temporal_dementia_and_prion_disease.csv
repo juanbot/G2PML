@@ -1,0 +1,32 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","APP","HighEvidence","monoallelic_not_imprinted",NA
+"2","CHMP2B","HighEvidence","monoallelic",NA
+"3","CSF1R","HighEvidence","monoallelic_not_imprinted",NA
+"4","DNAJC5","HighEvidence","monoallelic_not_imprinted",NA
+"5","DNMT1","HighEvidence","monoallelic",NA
+"6","EPM2A","HighEvidence","biallelic",NA
+"7","GRN","HighEvidence","monoallelic",NA
+"8","ITM2B","HighEvidence","monoallelic_not_imprinted",NA
+"9","MAPT","HighEvidence","monoallelic_not_imprinted",NA
+"10","NHLRC1","HighEvidence","biallelic",NA
+"11","NOTCH3","HighEvidence","monoallelic_not_imprinted",NA
+"12","PRNP","HighEvidence","monoallelic_not_imprinted",NA
+"13","PSEN1","HighEvidence","monoallelic_not_imprinted",NA
+"14","PSEN2","HighEvidence","monoallelic_not_imprinted",NA
+"15","TARDBP","HighEvidence","monoallelic",NA
+"16","TBK1","HighEvidence","monoallelic_not_imprinted",NA
+"17","TYROBP","HighEvidence","biallelic",NA
+"18","UBQLN2","HighEvidence","xlinked_monoallelic",NA
+"19","VCP","HighEvidence","monoallelic_not_imprinted",NA
+"20","ATN1","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"21","C9orf72","LowEvidence","monoallelic","Loss-of-function variants (as defined in pop up message) DO NOT cause this phenotype - please provide details in the comments"
+"22","CHCHD10","LowEvidence",NA,NA
+"23","DCTN1","LowEvidence","monoallelic_not_imprinted",NA
+"24","FUS","LowEvidence",NA,NA
+"25","GBA","LowEvidence",NA,NA
+"26","HNRNPA1","LowEvidence",NA,NA
+"27","HTRA1","LowEvidence",NA,NA
+"28","JPH3","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"29","SNCA","LowEvidence",NA,NA
+"30","SNCB","LowEvidence",NA,NA
+"31","TREM2","LowEvidence",NA,NA

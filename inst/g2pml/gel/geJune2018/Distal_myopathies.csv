@@ -1,0 +1,28 @@
+"","GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity"
+"1","ACTA1","HighEvidence","monoallelic_and_more_severe_biallelic",NA
+"2","ANO5","HighEvidence","biallelic",NA
+"3","BAG3","HighEvidence","monoallelic_not_imprinted",NA
+"4","CNBP","HighEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"5","CRYAB","HighEvidence","monoallelic_not_imprinted",NA
+"6","DES","HighEvidence","monoallelic_and_biallelic",NA
+"7","DNAJB6","HighEvidence","monoallelic_not_imprinted",NA
+"8","DNM2","HighEvidence","monoallelic_not_imprinted",NA
+"9","DYSF","HighEvidence","biallelic",NA
+"10","FHL1","HighEvidence","xlinked_monoallelic",NA
+"11","FLNC","HighEvidence","monoallelic_not_imprinted",NA
+"12","GNE","HighEvidence","biallelic",NA
+"13","HSPB1","HighEvidence","monoallelic_not_imprinted",NA
+"14","HSPB8","HighEvidence","monoallelic_not_imprinted",NA
+"15","LDB3","HighEvidence","monoallelic_not_imprinted",NA
+"16","MATR3","HighEvidence","monoallelic_not_imprinted",NA
+"17","MYH7","HighEvidence","monoallelic_not_imprinted",NA
+"18","MYOT","HighEvidence","monoallelic_not_imprinted",NA
+"19","NEB","HighEvidence","biallelic",NA
+"20","SQSTM1","HighEvidence","monoallelic_not_imprinted",NA
+"21","TIA1","HighEvidence","monoallelic_and_more_severe_biallelic",NA
+"22","TTN","HighEvidence","monoallelic_not_imprinted",NA
+"23","VCP","HighEvidence","monoallelic_not_imprinted",NA
+"24","DMD","LowEvidence",NA,NA
+"25","DMPK","LowEvidence","monoallelic_not_imprinted","Other - please provide details in the comments"
+"26","DUX4","LowEvidence",NA,"Other - please provide details in the comments"
+"27","KLHL9","LowEvidence","monoallelic_not_imprinted",NA
