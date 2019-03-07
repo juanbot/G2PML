@@ -1079,7 +1079,7 @@ evalEnsemblesOneShot = function(ensembles,
     }
 
   }
-  return(list(hits=globalallhits,hitsperfold=globalhitsperfold))
+  return(list(hits=globalallhits,hitsperfold=globalhitsperfold,predictions=finaltable))
 }
 
 evalEnsembleOneShot = function(ensemble,
