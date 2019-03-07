@@ -62,90 +62,91 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
   finalEnsembles = NULL
   #for(method in methods){
   method = methods[1]
-    exprStr = ""
-    expid = paste0(c(panel,method),collapse="_")
-    cat("Working with",method,"\n")
-    cat("Reading disease genes from",panelf,"\n")
-    genes = read.csv(panelf,stringsAsFactors=F)
-    genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
-    genes = G2PML::fromSymbol2Hugo(genes)
+  exprStr = ""
+  expid = paste0(c(panel,method),collapse="_")
+  cat("Working with",method,"\n")
+  cat("Reading disease genes from",panelf,"\n")
+  genes = read.csv(panelf,stringsAsFactors=F)
+  genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
+  genes = na.omit(G2PML::fromSymbol2Hugo(genes))
 
-    if(controls == "allghosh")
-      ctrlpath=system.file("g2pml/controlgenes/allghosh/", "", package = "G2PML")
+  if(controls == "allghosh")
+    ctrlpath=system.file("g2pml/controlgenes/allghosh/", "", package = "G2PML")
+  else
+    stop(paste0("Control type not found:",controls))
+
+  #Getting control genes
+  ctrlfile = paste0(ctrlpath,"/",panel,"_controls.tsv")
+  cat("Reading controls from",ctrlfile,"\n")
+  ctrlgenes = read.delim(ctrlfile,header=F,stringsAsFactors=F)$V1
+  ctrlgenes = na.omit(G2PML::fromSymbol2Hugo(ctrlgenes))
+  cat("We get",length(ctrlgenes),"control genes\n")
+
+
+  #Configuration parameters
+  if(length(genes) < 50){
+    leaveoutpos = as.integer(length(genes)*0.3)
+  }else{
+    leaveoutpos = as.integer(length(genes)/k)
+  }
+  indexespos = matrix(nrow=k,ncol=length(genes)-leaveoutpos)
+  evalindexespos = matrix(nrow=k,ncol=leaveoutpos)
+  leaveoutneg = as.integer(length(ctrlgenes)/k)
+  indexesneg = matrix(nrow=k,ncol=length(ctrlgenes)-leaveoutneg)
+  evalindexesneg = matrix(nrow=k,ncol=leaveoutneg)
+
+  if(typeof(fs) == "character"){
+    if(fs == "own")
+      pathfs = system.file("g2pml/fs/", "", package = "G2PML")
     else
-      stop(paste0("Control type not found:",controls))
-
-    #Getting control genes
-    ctrlfile = paste0(ctrlpath,"/",panel,"_controls.tsv")
-    cat("Reading controls from",ctrlfile,"\n")
-    ctrlgenes = read.delim(ctrlfile,header=F,stringsAsFactors=F)$V1
-    cat("We get",length(ctrlgenes),"control genes\n")
-    ctrlgenes = G2PML::fromSymbol2Hugo(ctrlgenes)
-
-    #Configuration parameters
-    if(length(genes) < 50){
-      leaveoutpos = as.integer(length(genes)*0.3)
-    }else{
-      leaveoutpos = as.integer(length(genes)/k)
-    }
-    indexespos = matrix(nrow=k,ncol=length(genes)-leaveoutpos)
-    evalindexespos = matrix(nrow=k,ncol=leaveoutpos)
-    leaveoutneg = as.integer(length(ctrlgenes)/k)
-    indexesneg = matrix(nrow=k,ncol=length(ctrlgenes)-leaveoutneg)
-    evalindexesneg = matrix(nrow=k,ncol=leaveoutneg)
-
-    if(typeof(fs) == "character"){
-      if(fs == "own")
-        pathfs = system.file("g2pml/fs/", "", package = "G2PML")
-      else
-        stop(paste0("Feature selection strategy not found:",fs))
-      vars=NULL
-      fsfile = paste0(pathfs,"/featureSelection",panel)
-      if(!file.exists(paste0(fsfile,"_fsrfs_1.rds")) &
-         !file.exists(paste0(fsfile,"_fsrfs_2.rds")) &
-         !file.exists(paste0(fsfile,"_fsrfs_3.rds")) &
-         !file.exists(paste0(fsfile,"_fsrfs_4.rds")) &
-         !file.exists(paste0(fsfile,"_fsrfs_5.rds")))
-        fsfile=NULL
-    }else
-      vars = getVarsFromFS(fs,r=fsThreshold)
+      stop(paste0("Feature selection strategy not found:",fs))
+    vars=NULL
+    fsfile = paste0(pathfs,"/featureSelection",panel)
+    if(!file.exists(paste0(fsfile,"_fsrfs_1.rds")) &
+       !file.exists(paste0(fsfile,"_fsrfs_2.rds")) &
+       !file.exists(paste0(fsfile,"_fsrfs_3.rds")) &
+       !file.exists(paste0(fsfile,"_fsrfs_4.rds")) &
+       !file.exists(paste0(fsfile,"_fsrfs_5.rds")))
+      fsfile=NULL
+  }else
+    vars = getVarsFromFS(fs,r=fsThreshold)
 
 
 
-    for(fold in 1:k){
-      sequence = 1:length(genes)
-      indexespos[fold,] = sample(x=sequence,length(genes) -  leaveoutpos)
-      evalindexespos[fold,] = sequence[!(sequence %in% indexespos[fold,])]
-      lexpid = paste0(expid,"_kfold","_",fold)
+  for(fold in 1:k){
+    sequence = 1:length(genes)
+    indexespos[fold,] = sample(x=sequence,length(genes) -  leaveoutpos)
+    evalindexespos[fold,] = sequence[!(sequence %in% indexespos[fold,])]
+    lexpid = paste0(expid,"_kfold","_",fold)
 
-      sequence = 1:length(ctrlgenes)
-      indexesneg[fold,] = sample(x=sequence,length(ctrlgenes) -  leaveoutneg)
-      evalindexesneg[fold,] = sequence[!(sequence %in% indexesneg[fold,])]
+    sequence = 1:length(ctrlgenes)
+    indexesneg[fold,] = sample(x=sequence,length(ctrlgenes) -  leaveoutneg)
+    evalindexesneg[fold,] = sequence[!(sequence %in% indexesneg[fold,])]
 
-      genespos = genes[indexespos[fold,]]
-      genespos = G2PML::fromSymbol2Hugo(genespos)
-      genesneg = ctrlgenes[indexesneg[fold,]]
-      genesneg = G2PML::fromSymbol2Hugo(genesneg)
-      genestogo = c(genespos,genesneg)
-      condition = c(rep("Disease",length(genespos)),
-                    rep("Nondisease",length(genesneg)))
+    genespos = genes[indexespos[fold,]]
+    genespos = G2PML::fromSymbol2Hugo(genespos)
+    genesneg = ctrlgenes[indexesneg[fold,]]
+    genesneg = G2PML::fromSymbol2Hugo(genesneg)
+    genestogo = c(genespos,genesneg)
+    condition = c(rep("Disease",length(genespos)),
+                  rep("Nondisease",length(genesneg)))
 
-      if(auto)
-        finalEnsembles[[fold]] = ensembleLearnAutonomous(panel=panel,
-                                                         methods=methods,
-                                               condition=condition,
-                                               genes=genestogo,
-                                               nboot=nboot,
-                                               nsamps=nsamps,
-                                               tuneLength=tuneLength,
-                                               fsfile=fsfile,
-                                               maxTrials=maxTrials,
-                                               qmeasure=qmeasure,
-                                               vars=vars,
-                                               evalctrl=ctrlgenes[evalindexesneg[fold,]],
-                                               evaldisease=genes[evalindexespos[fold,]])
-      else
-        finalEnsembles[[fold]] = ensembleLearn(expID=lexpid,
+    if(auto)
+      finalEnsembles[[fold]] = ensembleLearnAutonomous(panel=panel,
+                                                       methods=methods,
+                                                       condition=condition,
+                                                       genes=genestogo,
+                                                       nboot=nboot,
+                                                       nsamps=nsamps,
+                                                       tuneLength=tuneLength,
+                                                       fsfile=fsfile,
+                                                       maxTrials=maxTrials,
+                                                       qmeasure=qmeasure,
+                                                       vars=vars,
+                                                       evalctrl=ctrlgenes[evalindexesneg[fold,]],
+                                                       evaldisease=genes[evalindexespos[fold,]])
+    else
+      finalEnsembles[[fold]] = ensembleLearn(expID=lexpid,
                                              panel=panel,
                                              condition=condition,
                                              useSeedGene=useSeedGene,
@@ -159,7 +160,7 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                                              vars=vars,
                                              evalctrl=ctrlgenes[evalindexesneg[fold,]],
                                              evaldisease=genes[evalindexespos[fold,]])
-    }
+  }
 
   finalEnsembles$eval = evalEnsemblesOneShot(finalEnsembles)
   return(finalEnsembles)
@@ -210,6 +211,7 @@ ensembleLearnAutonomous  = function(genes,
                                     ...)
 {
   cat("Calling ensembleLearn with\n")
+  genes = na.omit(fromSymbol2Hugo(genes))
   cat("Genes(",length(genes),"):",paste0(genes[1:3],collapse=","),"...\n")
   cat("We'll use",nboot,"sub-models\n")
   cat("Proportion between disease and non disease\n")
@@ -319,10 +321,10 @@ ensembleLearnAutonomous  = function(genes,
     method = methods[methodIndex]
     cat("Learning with method",method,"\n")
     result = caretLearn(tuneLength=tuneLength,
-                                nsamps=nsamps,
-                                in.file=localdata.in,
-                                model.with.all = T,
-                                method=method)
+                        nsamps=nsamps,
+                        in.file=localdata.in,
+                        model.with.all = T,
+                        method=method)
 
 
     ctrlgenes = localdata.in$gene[localdata.in$condition == "Nondisease"]
@@ -358,9 +360,9 @@ ensembleLearnAutonomous  = function(genes,
                      modelprefix=prefix)
 
     preds = ensemblePredictAllGenomev2(ensemble=testModel,
-                                             n=testModel$nboot,
-                                             cutoff=cutoff,
-                                             vars=vars)
+                                       n=testModel$nboot,
+                                       cutoff=cutoff,
+                                       vars=vars)
 
     testModel$preds = preds
     testModel$evaldisease = evaldisease
@@ -473,16 +475,14 @@ ensembleLearnAutonomous  = function(genes,
                     optinfo=optInfo)
 
   preds = ensemblePredictAllGenomev2(ensemble=finalModel,
-                                             n=finalModel$nboot,
-                                             cutoff=cutoff,
-                                             vars=vars)
+                                     n=finalModel$nboot,
+                                     cutoff=cutoff,
+                                     vars=vars)
   finalModel$preds = preds
   finalModel$cutoff = cutoff
 
   #finalModel$metadata = mllearn.genEnsembleMetaData(finalModel,panel)
-  for(i in 1:length(finalModel$model)){
-    finalModel$model[[i]]$model = NULL
-  }
+
   finalModel$method = "multimethod"
   finalModel$evaldisease = evaldisease
   finalModel$evalctrl = evalctrl
@@ -1217,6 +1217,7 @@ getHits = function(panel,genes,
     oldgenes = read.csv(paste0(oldgenespath,"/",panel,".csv"),stringsAsFactors=F)
     oldgenes = oldgenes$GeneSymbol[oldgenes$LevelOfConfidence %in% "HighEvidence"]
     brandnew = setdiff(newgenes,oldgenes)
+    brandnew = na.omit(fromSymbol2Hugo(brandnew))
     print("new genes from newer panel are")
     print(brandnew)
   }
