@@ -393,7 +393,6 @@ ensembleLearnAutonomous  = function(genes,
           if(i >= evalStep){
             cat("We now test whether the model should we kept it?\n")
 
-
             if(isProgressMade(qmeasure,kappa,lastKappa)){
               cat("We improve kappa from",lastKappa,"to",kappa,"at iteration",i,"using method",methods[methodIndex],"\n")
               lastKappa = kappa
@@ -413,7 +412,7 @@ ensembleLearnAutonomous  = function(genes,
 
             }else{
               cat("We can't improve kappa from",lastKappa,"to",kappa,"at iteration",i,", doing backtrack\n")
-              ensemble[[i]] =  NULL
+              ensemble =  ensemble[1:(i-1)]
               optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method=methods[methodIndex],success=F)
               nulltrials = nulltrials + 1
               allresults = allresults[allresults[,1] != i,]
@@ -432,7 +431,7 @@ ensembleLearnAutonomous  = function(genes,
             cat("Yes, we keep it. Not enough models in the ensemble yet\n")
             optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method=methods[methodIndex],success=T)
             i = i + 1
-            methodIndex = 1
+            methodIndex = (methodIndex %% length(methods)) + 1
             lastKappa = kappa
           }
         }else{ #At this point, the whole ensemble is bad, we drop the last model
@@ -452,9 +451,7 @@ ensembleLearnAutonomous  = function(genes,
       nulltrials = nulltrials + 1
       allresults = allresults[allresults[,1] != i,]
       cat("Still",maxTrials - nulltrials,"left\n")
-      methodIndex = methodIndex + 1
-      if(methodIndex > length(methods))
-        methodIndex = 1
+      methodIndex = (methodIndex %% length(methods)) + 1
       cat("We'll try now with method",methods[methodIndex],"\n")
     }
 
