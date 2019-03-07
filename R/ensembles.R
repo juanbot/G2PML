@@ -970,9 +970,6 @@ evalEnsemblesOneShot = function(ensembles,
   globalallhits = NULL
   globalhitsperfold = NULL
 
-  untilTree = ensembles[[1]]$nboot
-  #for(untilTree in 1:ensembles[[1]]$nboot){
-  print(untilTree)
   allpredictions = NULL
   alldiseasegenes = NULL
   allhits = NULL
@@ -984,6 +981,10 @@ evalEnsemblesOneShot = function(ensembles,
   used = 0
   evalgenes = NULL
   for(i in 1:k){
+    untilTree = ensembles[[i]]$nboot
+    #for(untilTree in 1:ensembles[[1]]$nboot){
+    print(untilTree)
+
     cat("First we evaluate without predictions\n")
     evaluation = evalEnsembleOneShot(ensemble = ensembles[[i]],
                                      cutoff=cutoff,
