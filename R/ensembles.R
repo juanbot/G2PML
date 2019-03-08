@@ -132,7 +132,7 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                   rep("Nondisease",length(genesneg)))
 
     if(auto)
-      finalEnsembles[[fold]] = ensembleLearnAutonomous(panel=panel,
+      finalEnsembles[[fold]] = ensembleLearnTournament(panel=panel,
                                                        methods=methods,
                                                        condition=condition,
                                                        genes=genestogo,
@@ -491,7 +491,330 @@ ensembleLearnAutonomous  = function(genes,
   return(finalModel)
 }
 
+ensembleLearnTournament  = function(genes,
+                                    panel=NULL,
+                                    #If condition is NULL then all genes are disease
+                                    condition=NULL,
+                                    #The ID for referring to the results
+                                    expID = "BootstrapEnsemble",
+                                    #The caret Method to use
+                                    methods=c("rpart",
+                                              "C5.0Tree",
+                                              "svmRadial",
+                                              "rf",
+                                              "sparseLDA",
+                                              "kknn"),
+                                    #If we do feature selection, these are the vars we use
+                                    fsfile=NULL,
+                                    vars=NULL,
+                                    #The control genes to use
+                                    controls="ghosh",
+                                    #We don't want these predictors to be used for learning
+                                    filter=c("DSI","DPI","ESTcount","constitutiveexons"),
+                                    seed=12345,
+                                    #Number of simple models to create within the ensemble
+                                    nboot=200,
+                                    #Number of different values to test for each ML algorithm
+                                    #hyperparameter
+                                    tuneLength=5,
+                                    #Number of repeats to be done by Caret
+                                    nsamps=5,
+                                    evalStep = 1,
+                                    maxTrials=10,
+                                    minKappa = 0.1,
+                                    minPPV = 0.6,
+                                    cutoff=0.9,
+                                    alpha=0.7,
+                                    debug=F,
+                                    usereplacement=F,
+                                    qmeasure="sens",
+                                    useppv=F,
+                                    evaldisease=NULL,
+                                    evalctrl=NULL,
+                                    ...)
+{
+  cat("Calling ensembleLearn with\n")
+  genes = na.omit(fromSymbol2Hugo(genes))
+  cat("Genes(",length(genes),"):",paste0(genes[1:3],collapse=","),"...\n")
+  cat("We'll use",nboot,"sub-models\n")
+  cat("Proportion between disease and non disease\n")
+  print(table(condition))
+  cat("Method list:",paste0(methods,collapse=","),"\n")
+  cat("Controls:",controls,"\n")
+  cat("expID:",expID,"\n")
 
+  methods = unlist(lapply(methods,
+                          function(x){ tryCatch({ checkInstall(getModelInfo(x)$library); return(x)},
+                                                error = function(e){ print(e); NULL },0)}))
+
+  cat(paste0("Available methods to use are ",paste0(methods,collapse=", ")),"\n")
+
+  if(is.null(vars)){
+    if(!is.null(fsfile)){
+      vars = fsGetVars(file=fsfile)
+      cat("We will use feature selection on vars\n")
+      print(vars)
+    }
+  }
+
+  modelEvals = NULL
+  modelHits = NULL
+
+  set.seed(seed)
+  evaluation = NULL
+  prefix = NULL
+  ensemble = NULL
+
+  alldata.in = fromGenes2MLData(genes=genes,
+                                addcontrols=F,
+                                vars=vars,
+                                condition=condition,
+                                filter=filter)
+
+  if(debug){
+    alldata.in = alldata.in[,c(1:10,ncol(alldata.in))]
+  }
+
+  set.seed(seed)
+  evaluation = NULL
+  prefix = NULL
+  ensemble = NULL
+
+  #Separate controls from disease
+  controlsd = alldata.in[alldata.in$condition == "Nondisease",]
+  data.in = alldata.in[alldata.in$condition == "Disease",]
+  ncontrols = nrow(data.in)
+  allresults = NULL
+  fits = NULL
+
+  isMinimumQuality = function(qmeasure,value){
+    if(qmeasure == "costerror"){
+      return(value < 0.9)
+    }
+    if(qmeasure == "kappa" | qmeasure == "mccc")
+      return(value > 0.1)
+    if(qmeasure == "bacc" | qmeasure == "sens")
+      return(value > 0.3)
+  }
+
+  isOptimalValue = function(qmeasure,value){
+    if(qmeasure == "costerror"){
+      return(value == 0)
+    }
+    return(value == 1)
+  }
+
+  isProgressMade = function(qmeasure,value,lastValue){
+    if(qmeasure == "costerror"){
+      return(value <= lastValue)
+    }
+    return(value >= lastValue)
+  }
+
+  i = 1
+  if(qmeasure == "costerror"){
+    lastKappa = 1
+    minKappa=0.9
+  }else
+    lastKappa = -1
+  nulltrials = 0
+  maxTrials = maxTrials*length(methods)
+  methodIndex = 1
+  optInfo = list()
+  nonOptimal=T
+  while(i <= nboot & nulltrials < maxTrials & nonOptimal){
+    cat("Starting with bootstrap",i,"\n")
+    cat("We will select controls sampling from the whole set\n")
+    ctrlmask = sample(1:nrow(controlsd),nrow(data.in))
+    if(usereplacement)
+      localdata.in = rbind(data.in[sample(1:nrow(data.in),
+                                          nrow(data.in),
+                                          replace=T),],
+                           controlsd[ctrlmask,])
+    else{
+      then = floor(nrow(data.in)*0.9)
+      ctrlmask = sample(1:nrow(controlsd),then)
+      localdata.in = rbind(data.in[sample(1:nrow(data.in),then),],
+                           controlsd[ctrlmask,])
+
+    }
+
+    kappas = NULL
+    localModels = NULL
+    localEnsembles = NULL
+    for(method in methods){
+      cat("Trying our luck now with with method",method,"\n")
+      result = caretLearn(tuneLength=tuneLength,
+                          nsamps=nsamps,
+                          in.file=localdata.in,
+                          model.with.all = T,
+                          method=method)
+      ctrlgenes = localdata.in$gene[localdata.in$condition == "Nondisease"]
+      localModels[[method]] =  list(model=result$model$finalModel,
+                                    attsused=result$attsused,
+                                    method=method,
+                                    controls=ctrlgenes)
+      ensemble[[i]] = localModels[[method]]
+      toreturn = result$results[,c("ROC","Sens","Spec","ROCSD","SensSD","SpecSD")]
+      toreturn = as.vector(toreturn)
+      cat("Finished running method",method,"wihtin bootstrap",i,"\n")
+
+      allresults = rbind(allresults,cbind(rep(i,nrow(toreturn)),toreturn))
+      cat("Now let's evaluate\n")
+
+      #Do we get an improvement???
+      model.indexes = as.numeric(names(sort(tapply(allresults$ROC,allresults[,1],
+                                                   function(x){ max(x)}),
+                                            decreasing=T)))
+      testModel = list(genes=genes,
+                       method=method,
+                       panel=panel,
+                       controls=controls,
+                       controlgenes=controlsd$gene,
+                       vars=vars,
+                       condition=condition,
+                       nboot=length(ensemble),
+                       model=ensemble,
+                       eval=allresults,
+                       modelindexes=model.indexes,
+                       modelprefix=prefix)
+
+      preds = ensemblePredictAllGenomev2(ensemble=testModel,
+                                         n=testModel$nboot,
+                                         cutoff=cutoff,
+                                         vars=vars)
+      testModel$preds = preds
+      testModel$evaldisease = evaldisease
+      testModel$evalctrl = evalctrl
+      testModelEvaluation = evalEnsembleOneShot(testModel,cutoff=cutoff,alpha=alpha)
+      localEnsembles[[method]] = testModel
+
+      #Should we keep evalating or not??
+      #We access the kappa value
+      if(useppv){
+        kappas[[method]] = mean(testModelEvaluation$ppv)
+        cat("Using PPV\n")
+        minThreshold = minPPV
+      }else{
+        cat("Using as kappa,",qmeasure,"\n")
+        #kappa = mean(testModelEvaluation$kappa)
+        kappas[[method]] = mean(unlist(testModelEvaluation[qmeasure]))
+        minThreshold = minKappa
+      }
+    }
+
+    print("These are the kappas per method")
+    print(kappas)
+    winnerIndex = names(kappas)[which.max(unlist(kappas))]
+    kappa = kappas[[winnerIndex]]
+    winnerMethod = localModels[[winnerIndex]]
+
+    print(kappa)
+    if(!is.nan(kappa)){
+      if(isOptimalValue(qmeasure,kappa)){
+        nonOptimal=F
+        ensemble[[i]] = localModels[[winnerIndex]]
+
+      }
+
+      else{
+        if(isMinimumQuality(qmeasure,kappa)){
+          cat("The ensemble is good enough with the new model, should we keep it?\n")
+
+          if(i >= evalStep){
+            cat("We now test whether the model should we kept it?\n")
+
+            if(isProgressMade(qmeasure,kappa,lastKappa)){
+              cat("We improve kappa from",lastKappa,"to",kappa,"at iteration",i,
+                  "using method",winnerIndex,"\n")
+              lastKappa = kappa
+              optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method=winnerIndex,success=T)
+              nulltrials = 0
+              ensemble[[i]] = localModels[[winnerIndex]]
+              i = i + 1
+
+              singleeval = evalEnsembleOneShot(ensemble=localEnsembles[[winnerIndex]],
+                                               cutoff=0.5)
+              modelEvals = rbind(modelEvals,c(panel,i,singleeval["auc"],singleeval["ppv"],
+                                              singleeval["kappa"],singleeval["mcc"],
+                                              singleeval["bacc"],singleeval["sens"],
+                                              singleeval["spec"],singleeval["costerror"]))
+              modelHits = rbind(modelHits,singleeval$hits)
+              #print(modelEvals)
+              #print(modelHits)
+
+            }else{
+              cat("We can't improve kappa from",lastKappa,"to",kappa,"at iteration",i,", doing backtrack\n")
+              ensemble =  ensemble[1:(i-1)]
+              optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method="allmethods",success=F)
+              nulltrials = nulltrials + 1
+              allresults = allresults[allresults[,1] != i,]
+              cat("Still",maxTrials - nulltrials,"left\n")
+              cat("We'll try now with a new round of methods",paste0(methods,collapse=","),"\n")
+            }
+            if(useppv)
+              cat("PPVs so far",paste0(unlist(lapply(optInfo,function(x){return(x["kappa"])})),collapse=","),"\n")
+            else
+              cat("Kappas so far",paste0(unlist(lapply(optInfo,function(x){return(x["kappa"])})),collapse=","),"\n")
+
+          }else{ #We simply add the model and wait until we have enough of them
+            cat("Yes, we keep it. Not enough models in the ensemble yet\n")
+            optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method=winnerIndex,success=T)
+            ensemble[[i]] = localModels[[winnerIndex]]
+            i = i + 1
+            lastKappa = kappa
+          }
+        }else{ #At this point, the whole list of methods did badly
+          cat("We have to drop the last models iteration results, no minimum quality achieved\n")
+          ensemble[[i]] =  NULL
+          allresults = allresults[allresults[,1] != i,]
+          cat("We'll try now now with a new round of methods",paste0(methods,collapse=","),"\n")
+        }
+      }
+
+
+
+    }else{
+      cat("This iteration is NULL, kappa is not valid\n")
+      nulltrials = nulltrials + 1
+      allresults = allresults[allresults[,1] != i,]
+      cat("Still",maxTrials - nulltrials,"left\n")
+      cat("We'll try now now with a new round of methods",paste0(methods,collapse=","),"\n")
+    }
+
+  }
+  cat("Leaving the loop and finishing up\n")
+  genes = c(data.in$gene,controlsd$gene)
+
+  finalModel = list(genes=genes,
+                    panel=panel,
+                    controls=controls,
+                    controlgenes=controlsd$gene,
+                    vars=vars,
+                    condition=condition,
+                    nboot=length(ensemble),
+                    model=ensemble,
+                    eval=allresults,
+                    modelindexes=1:length(ensemble),
+                    modelprefix=prefix,
+                    optinfo=optInfo)
+
+  preds = ensemblePredictAllGenomev2(ensemble=finalModel,
+                                     n=finalModel$nboot,
+                                     cutoff=cutoff,
+                                     vars=vars)
+  finalModel$preds = preds
+  finalModel$cutoff = cutoff
+
+  #finalModel$metadata = mllearn.genEnsembleMetaData(finalModel,panel)
+
+  finalModel$method = "multimethod"
+  finalModel$evaldisease = evaldisease
+  finalModel$evalctrl = evalctrl
+  finalModel$modelEvals = modelEvals
+  finalModel$modelHits = modelHits
+  return(finalModel)
+}
 #' Title
 #'
 #' @param genes
