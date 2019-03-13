@@ -35,7 +35,8 @@ generateMLDB = function(handlers=dataHandlerMethods()){
 
   allgenes = fromSymbol2Hugo(allgenes$V1)
   allgenes = na.omit(allgenes)
-  dataall = generateMLDBByGene(casecontrolset=getSingleConditionSet(genes=allgenes),handlers = handlers)
+  dataall = generateMLDBByGene(casecontrolset=getSingleConditionSet(genes=allgenes),
+                               handlers = handlers)
   dataft = dataall[,!(colnames(dataall) %in%
                         c("alt3.5EST","ExACpLI","ExACpRec","ExACpNull","ExACpMiss","DPI",
                           "DSI","ESTcount","constitutiveexons"))]
@@ -57,7 +58,9 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
   hugo.genes = hugo.genes[mask]
 
   valgenes = casecontrolset$genes
-  names(valgenes) = fromGeneName2EnsemblBM(valgenes)
+  #myens <<- fromGeneName2EnsemblBM(valgenes)
+  names(valgenes) = myens
+  #names(valgenes) = fromGeneName2EnsemblBM(valgenes)
 
   mldata = getAllGeneValues(genes=valgenes,
                             queries = handlers)
@@ -83,6 +86,7 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 
   mldata = dealWithNA(mldata,which(colnames(mldata) == "LoFTool"),"mean")
   mldata = dealWithNA(mldata,which(colnames(mldata) == "RVIS"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "EvoTol"),"mean")
 
   mldata = dealWithNA(mldata,which(colnames(mldata) == "pAD"),"mean")
   mldata = dealWithNA(mldata,which(colnames(mldata) == "pAR"),"mean")
@@ -119,8 +123,15 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 }
 
 dataHandlerMethods = function(){
-  return(c(getGeneValuesGCcontent,
+  return(c(getGeneValuesGeneLength,
+           getGeneValuesTranscriptCount,
+           getGeneValuesCountsOverlap,
+           getGeneValuesNumJunctions,
+           getGeneValuesIntronicLength,
+           getGeneValuesGCcontent,
+           getGeneValuesString,
            getGeneValuesLoFTool,
+           getGeneValuesEvoTol,
            getGeneValuesRVIS,
            getGeneValuespAD,
            getGeneValuespAR,
@@ -132,13 +143,7 @@ dataHandlerMethods = function(){
            getGeneValuesgnomadoeMiss,
            getGeneValuesRankedMMSpecificity,
            getGeneValuesExpressionSpecificity,
-           getGeneValuesAdjacencySpecificity,
-           getGeneValuesGeneLength,
-           getGeneValuesTranscriptCount,
-           getGeneValuesCountsOverlap,
-           getGeneValuesNumJunctions,
-           getGeneValuesIntronicLength,
-           getGeneValuesString))
+           getGeneValuesAdjacencySpecificity))
 }
 
 #' Title
@@ -240,8 +245,8 @@ getGeneValuesGeneLength = function(genes,drop.na=F){
     ens.genes = fromGeneName2EnsemblBM(genes)
   else
     ens.genes = names(genes)
-  fileout = paste0(system.file("g2pml/", "", package = "G2PML"),"/genelength.txt")
-  datain = read.table(fileout,stringsAsFactors=F,header=T)
+  fileout = paste0(system.file("g2pml/", "", package = "G2PML"),"/genelength.txt.zip")
+  datain = read.table(unz(fileout,"genelength.txt"),stringsAsFactors=F,header=T)
   mask = match(ens.genes,datain$ensembl_gene_id)
   dataout = NULL
   j = 1
@@ -267,8 +272,8 @@ getGeneValuesTranscriptCount = function(genes,drop.na=F){
   else
     ens.genes = names(genes)
   fileout = paste0(system.file("g2pml/", "", package = "G2PML"),
-                   "transcriptcount.txt")
-  datain = read.table(fileout,stringsAsFactors=F,header=T)
+                   "transcriptcount.txt.zip")
+  datain = read.table(unz(fileout,"transcriptcount.txt"),stringsAsFactors=F,header=T)
   mask = match(ens.genes,datain$ensembl_gene_id)
   dataout = NULL
 
@@ -294,8 +299,8 @@ getGeneValuesGCcontent = function(genes,drop.na=F){
   else
     ens.genes = names(genes)
   fileout = paste0(system.file("g2pml/", "", package = "G2PML"),
-                   "gccontent.txt")
-  datain = read.table(fileout,stringsAsFactors=F,header=T)
+                   "gccontent.txt.zip")
+  datain = read.table(unz(fileout,"gccontent.txt"),stringsAsFactors=F,header=T)
   mask = match(ens.genes,datain$ensembl_gene_id)
   dataout = NULL
 
@@ -316,13 +321,13 @@ getGeneValuesGCcontent = function(genes,drop.na=F){
 
 getGeneValuesCountsOverlap = function(genes,drop.na=F){
   cat("Generating CountsOverlap data for",length(genes),"genes\n")
-  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
-  datain = read.csv(filein,stringsAsFactor=F)
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.zip")
+  datain = read.table(unz(filein,"annotation.txt"),stringsAsFactors=F,sep="\t",header=T)
   if(is.null(names(genes)))
     ens.genes = fromGeneName2EnsemblBM(genes)
   else
     ens.genes = names(genes)
-  mask = match(ens.genes,datain$X)
+  mask = match(ens.genes,datain$gname)
   dataout = NULL
 
   j = 1
@@ -343,13 +348,13 @@ getGeneValuesCountsOverlap = function(genes,drop.na=F){
 
 getGeneValuesCountsProtCodOverlap = function(genes,drop.na=F){
   cat("Generating CountsProtCodOverlap data for",length(genes),"genes\n")
-  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
-  datain = read.csv(filein,stringsAsFactor=F)
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.zip")
+  datain = read.table(unz(filein,"annotation.txt"),stringsAsFactors=F,sep="\t",header=T)
   if(is.null(names(genes)))
     ens.genes = fromGeneName2EnsemblBM(genes)
   else
     ens.genes = names(genes)
-  mask = match(ens.genes,datain$X)
+  mask = match(ens.genes,datain$gname)
   dataout = NULL
 
   j = 1
@@ -373,13 +378,13 @@ getGeneValuesCountsProtCodOverlap = function(genes,drop.na=F){
 #of exons, not necessarily with number of transcripts
 getGeneValuesNumJunctions = function(genes,drop.na=F){
   cat("Generating NumJunctions data for",length(genes),"genes\n")
-  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
-  datain = read.csv(filein,stringsAsFactor=F)
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.zip")
+  datain = read.table(unz(filein,"annotation.txt"),stringsAsFactors=F,sep="\t",header=T)
   if(is.null(names(genes)))
     ens.genes = fromGeneName2EnsemblBM(genes)
   else
     ens.genes = names(genes)
-  mask = match(ens.genes,datain$X)
+  mask = match(ens.genes,datain$gname)
   dataout = NULL
 
   j = 1
@@ -402,13 +407,13 @@ getGeneValuesNumJunctions = function(genes,drop.na=F){
 #If NA, the gene only has an exon, thus NA is equal to 0
 getGeneValuesIntronicLength = function(genes,drop.na=F){
   cat("Generating IntronicLength data for",length(genes),"genes\n")
-  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
-  datain = read.csv(filein,stringsAsFactor=F)
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.zip")
+  datain = read.table(unz(filein,"annotation.txt"),stringsAsFactors=F,sep="\t",header=T)
   if(is.null(names(genes)))
     ens.genes = fromGeneName2EnsemblBM(genes)
   else
     ens.genes = names(genes)
-  mask = match(ens.genes,datain$X)
+  mask = match(ens.genes,datain$gname)
   dataout = NULL
 
   j = 1
@@ -455,8 +460,9 @@ getGeneValuesDPI = function(genes,drop.na=F){
 
 getGeneValuesLoFTool = function(genes,drop.na=F){
   cat("Generating LoFTool scores data for",length(genes),"genes\n")
-  loftool = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
-                             "genesScoresNBarahona.txt"),
+  loftool = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                             "genesScoresNBarahona.txt.zip"),
+                           "genesScoresNBarahona.txt"),
                       stringsAsFactors=F,sep=" ")
   pli = tapply(loftool$LoFtool,loftool$Gene,max)
   if(drop.na)
@@ -468,11 +474,26 @@ getGeneValuesLoFTool = function(genes,drop.na=F){
   return(toreturn)
 }
 
+getGeneValuesEvoTol = function(genes,drop.na=F){
+  cat("Generating EvoTol scores data for",length(genes),"genes\n")
+  evotol = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),"EvoTolWebQuery13March2019.txt.zip"),
+                          "EvoTolWebQuery13March2019.txt"),
+                       stringsAsFactors=F,sep="\t")
+  pli = tapply(evotol$evotol,evotol$gene,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pli)))]
+  toreturn = cbind(genes,pli[match(genes,names(pli))])
+  colnames(toreturn) = c("gene","EvoTol")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$EvoTol = as.numeric(toreturn$EvoTol)
+  return(toreturn)
+}
+
 #https://academic.oup.com/bioinformatics/article/33/4/471/2525582
 getGeneValuesRVIS = function(genes,drop.na=F){
   cat("Generating RVIS scores data for",length(genes),"genes\n")
-  rvis = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
-                              "RVIS_Unpublished_ExACv2_March2017.txt"),
+  rvis = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                              "RVIS_Unpublished_ExACv2_March2017.zip"),"RVIS_Unpublished_ExACv2_March2017.txt"),
                        stringsAsFactors=F,sep="\t")
   pli = tapply(rvis$OEratio,rvis$gene,max)
   if(drop.na)
@@ -487,8 +508,8 @@ getGeneValuesRVIS = function(genes,drop.na=F){
 #http://genetics.bwh.harvard.edu/genescores/selection.html
 getGeneValuespAD = function(genes,drop.na=F){
   cat("Generating probability of AD Model of inheritance scores data for",length(genes),"genes\n")
-  pad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
-                           "moi.txt"),
+  pad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                           "moi.zip"),"moi.txt"),
                     stringsAsFactors=F,sep="\t")
   pli = tapply(pad$p_AD,pad$gene_symbol,max)
   if(drop.na)
@@ -503,8 +524,8 @@ getGeneValuespAD = function(genes,drop.na=F){
 #http://genetics.bwh.harvard.edu/genescores/selection.html
 getGeneValuespAR = function(genes,drop.na=F){
   cat("Generating probability of AR Model of inheritance scores data for",length(genes),"genes\n")
-  pad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
-                          "moi.txt"),
+  pad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                          "moi.zip"),"moi.txt"),
                    stringsAsFactors=F,sep="\t")
   pli = tapply(pad$p_AR,pad$gene_symbol,max)
   if(drop.na)
@@ -519,7 +540,9 @@ getGeneValuespAR = function(genes,drop.na=F){
 
 getGeneValuesgnomadpLI = function(genes,drop.na=F){
   cat("Generating gnomADpLI data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                             "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pli = tapply(gnomad$pLI,gnomad$gene,max)
   if(drop.na)
@@ -533,7 +556,9 @@ getGeneValuesgnomadpLI = function(genes,drop.na=F){
 
 getGeneValuesgnomadpRec = function(genes,drop.na=F){
   cat("Generating gnomADpRec data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pRec = tapply(gnomad$pRec,gnomad$gene,max)
   if(drop.na)
@@ -547,7 +572,9 @@ getGeneValuesgnomadpRec = function(genes,drop.na=F){
 
 getGeneValuesgnomadpMiss = function(genes,drop.na=F){
   cat("Generating gnomADpMiss data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pMiss = tapply(gnomad$mis_z,gnomad$gene,max)
   if(drop.na)
@@ -561,7 +588,9 @@ getGeneValuesgnomadpMiss = function(genes,drop.na=F){
 
 getGeneValuesgnomadoeLoF = function(genes,drop.na=F){
   cat("Generating gnomADoeLoF data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pMiss = tapply(gnomad$oe_lof,gnomad$gene,max)
   if(drop.na)
@@ -575,7 +604,9 @@ getGeneValuesgnomadoeLoF = function(genes,drop.na=F){
 
 getGeneValuesgnomadoeMiss = function(genes,drop.na=F){
   cat("Generating gnomADoeMiss data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pMiss = tapply(gnomad$oe_mis,gnomad$gene,max)
   if(drop.na)
@@ -588,7 +619,9 @@ getGeneValuesgnomadoeMiss = function(genes,drop.na=F){
 }
 getGeneValuesgnomadpNull = function(genes,drop.na=F){
   cat("Generating gnomADpNull data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                          "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pNull = tapply(gnomad$pNull,gnomad$gene,max)
   if(drop.na)
@@ -728,8 +761,8 @@ getGeneValuesHexAlt5EST = function(genes,drop.na=F){
 
 getGeneValuesString = function(genes,drop.na=F){
   cat("Generating String experimental score data for",length(genes),"genes\n")
-  domino = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
-                             "domino_score_all_final_03.04.17.txt"),
+  domino = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
+                             "domino_score_all_final_03.04.17.txt.zip"),"domino_score_all_final_03.04.17.txt"),
                       stringsAsFactors=F,sep="\t")
   domino$Gene = fromSymbol2Hugo(domino$Gene)
   #pli = tapply(exac$mu_mis,exac$gene,max)
@@ -1034,15 +1067,15 @@ fromGenes2MLData = function(genes,
 
 
 genLearningDataSet = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
-                              sep=",",
+                              sep="\t",
                               filter=NULL,
                               newdata=T){
 
   f.in = paste0(system.file("g2pml/", "", package = "G2PML"),
-                "/mlDBMarch2019.txt")
+                "mlDBMarch2019.txt.zip")
 
   genes = casecontrolset$gene
-  mldata = read.delim(f.in,stringsAsFactors=F,sep=sep)
+  mldata = read.delim(unz(f.in,"mlDBMarch2019.txt"),stringsAsFactors=F,sep="\t")
   mask = match(genes,mldata$gene)
   nulls = sum(is.na(mask))
   if(nulls > 0){
@@ -1142,18 +1175,18 @@ getCodingGenome = function(){
 fromGeneName2EnsemblBM = function(genes,use38=T){
 
   if(use38){
-    ensembl <- useMart(host="www.ensembl.org",
+    ensembl <- biomaRt::useMart(host="www.ensembl.org",
                        biomart="ENSEMBL_MART_ENSEMBL",
                        dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_name"
   }else{
-    ensembl <- useMart(host="jun2013.archive.ensembl.org",
+    ensembl <- biomaRt::useMart(host="jun2013.archive.ensembl.org",
                        biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_id"
   }
 
   attributes <- c(external.gene.att,"ensembl_gene_id")
-  genes.with.name = getBM(attributes=attributes, filters="hgnc_symbol", values=genes,mart=ensembl)
+  genes.with.name = biomaRt::getBM(attributes=attributes, filters="hgnc_symbol", values=genes,mart=ensembl)
   cat("From",length(genes),"gene IDs we got",nrow(genes.with.name),"genes with Ensemble name\n")
   #if(nrow(genes.with.name) >= length(genes))
   thematch = match(genes,genes.with.name$external_gene_name)
@@ -1307,14 +1340,15 @@ getGenesFromPanelApp = function(disorder="Neurology and neurodevelopmental disor
                      panel="Parkinson Disease and Complex Parkinsonism",
                      color){
 
-  if(color == "red")
-    evidence = "LowEvidence"
-  else if(color == "amber")
-    evidence = "ModerateEvidence"
-  else
-    evidence = "HighEvidence"
+  evidence = NULL
+  if("red" %in% color)
+    evidence = c(evidence,"LowEvidence")
+  if(color == "amber")
+    evidence = c(evidence,"ModerateEvidence")
+  if("green" %in% color)
+    evidence = c(evidence,"HighEvidence")
   genes = getPanelFromPanelApp(disorder,panel)
-  return(genes$GeneSymbol[genes$LevelOfConfidence == evidence])
+  return(genes$GeneSymbol[genes$LevelOfConfidence %in% evidence])
 }
 
 

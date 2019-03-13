@@ -1,4 +1,11 @@
 
+#for i in `cat panelsApr2018`;
+#do echo "cd /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/; Rscript -e \"library(caret);library(G2PML);panel=\\\"$i\\\";saveRDS(featureSelection(genes=getGelGenes(panel=panel),k=5,repeats=40),\\\"$i.fs.rds\\\")\"" |  qsub  -S /bin/bash -N $i -l h_rt=48:0:0 -l tmem=8G,h_vmem=8G -o
+#/SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.fs.o -e /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.fs.e ; done
+
+#for i in `cat panelsApr2018`; do echo
+#"cd /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/; Rscript -e \"library(caret);library(G2PML);panel=\\\"$i\\\";saveRDS(ensembleLearnKFold(panel=\\\"$i\\\",fs=featureSelection(genes=getGelGenes(panel=panel),k=3,repeats=20),nboot=20,auto=T,k=5,maxTrials=5),\\\"$i.Apr2018.rds\\\")\"" |  qsub -S /bin/bash -N $i -l h_rt=72:0:0 -l tmem=8G,h_vmem=8G
+#-o /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.apr.o -e /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.apr.e ; done
 
 #' Title
 #'
