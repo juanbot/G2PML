@@ -2,6 +2,24 @@
 
 #' Title
 #'
+#' @param atts
+#'
+#' @return
+#' @export
+#'
+#' @examples
+prettyPredictorName = function(atts){
+  atts = gsub("ExprSpecific","Expression",atts)
+  atts = gsub("RankedMMSpecificRank","",atts)
+  atts = gsub("AdjSpecificAdj","Adjacency",atts)
+  atts = gsub("1$","",atts)
+  return(atts)
+
+}
+
+
+#' Title
+#'
 #' @param out.path
 #' @param outfile
 #'
@@ -9,22 +27,23 @@
 #' @export
 #'
 #' @examples
-generateMLDB = function(out.path="basicdb/",
-                        outfile="mlDBv2.tsv"){
+generateMLDB = function(handlers=dataHandlerMethods()){
 
-  allgenes = read.table("basicdb/workinggenes.txt",
+  allgenes = read.table(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "workinggenes.txt"),
                         stringsAsFactors=F,header=F)
+
   allgenes = fromSymbol2Hugo(allgenes$V1)
   allgenes = na.omit(allgenes)
-  datall = generateMLDBByGene(casecontrolset=getSingleConditionSet(genes=allgenes))
+  dataall = generateMLDBByGene(casecontrolset=getSingleConditionSet(genes=allgenes),handlers = handlers)
   dataft = dataall[,!(colnames(dataall) %in%
                         c("alt3.5EST","ExACpLI","ExACpRec","ExACpNull","ExACpMiss","DPI",
                           "DSI","ESTcount","constitutiveexons"))]
-  write.table(dataft,paste0(out.path,"/",outfile),col.names=T,quote=F,row.names=F,sep="\t")
-
+  return(dataft)
 }
 
 generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
+                              handlers=dataHandlerMethods(),
                               filter=NULL){
 
 
@@ -37,8 +56,11 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 
   hugo.genes = hugo.genes[mask]
 
-  mldata = getAllGeneValues(genes=casecontrolset$genes,
-                            queries = dataHandlerMethods())
+  valgenes = casecontrolset$genes
+  names(valgenes) = fromGeneName2EnsemblBM(valgenes)
+
+  mldata = getAllGeneValues(genes=valgenes,
+                            queries = handlers)
 
   mldata = as.data.frame(cbind(mldata,casecontrolset$condition))
   colnames(mldata)[ncol(mldata)] = "condition"
@@ -46,7 +68,7 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 
   #Deal with NAs how?
   #String
-  mldata = dealWithNA(mldata,which(colnames(mldata) == "StringCombined"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "String"),"mean")
   #ExACpLI
   mldata = dealWithNA(mldata,which(colnames(mldata) == "ExACpLI"),"mean")
   mldata = dealWithNA(mldata,which(colnames(mldata) == "ExACpRec"),"mean")
@@ -56,6 +78,15 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
   mldata = dealWithNA(mldata,which(colnames(mldata) == "gnomadpRec"),"mean")
   mldata = dealWithNA(mldata,which(colnames(mldata) == "gnomadpNull"),"mean")
   mldata = dealWithNA(mldata,which(colnames(mldata) == "gnomadpMiss"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "gnomadOELoF"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "gnomadOEMiss"),"mean")
+
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "LoFTool"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "RVIS"),"mean")
+
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "pAD"),"mean")
+  mldata = dealWithNA(mldata,which(colnames(mldata) == "pAR"),"mean")
+
 
   #Biomart on gene complexity
   mldata = dealWithNA(mldata,which(colnames(mldata) == "GeneLength"),"mean")
@@ -88,32 +119,26 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 }
 
 dataHandlerMethods = function(){
-  return(c(getGeneValuesHexConstExons,
-           getGeneValuesStringCombined,
-           getGeneValuesHexESTCount,
-           getGeneValuesHexAlt3EST,
-           getGeneValuesHexAlt5EST,
-           getGeneValuesHexAlt3.5EST,
-           getGeneValuesExACpLI,
-           getGeneValuesExACpRec,
-           getGeneValuesExACpNull,
-           getGeneValuesExACpMiss,
+  return(c(getGeneValuesGCcontent,
+           getGeneValuesLoFTool,
+           getGeneValuesRVIS,
+           getGeneValuespAD,
+           getGeneValuespAR,
            getGeneValuesgnomadpLI,
            getGeneValuesgnomadpRec,
            getGeneValuesgnomadpNull,
            getGeneValuesgnomadpMiss,
-           getGeneValuesGeneLength,
-           getGeneValuesTranscriptCount,
-           getGeneValuesGCcontent,
-           getGeneValuesDPI,
-           getGeneValuesDSI,
-           getGeneValuesCountsOverlap,
-           getGeneValuesCountsProtCodOverlap,
-           getGeneValuesNumJunctions,
-           getGeneValuesIntronicLength,
+           getGeneValuesgnomadoeLoF,
+           getGeneValuesgnomadoeMiss,
+           getGeneValuesRankedMMSpecificity,
            getGeneValuesExpressionSpecificity,
            getGeneValuesAdjacencySpecificity,
-           getGeneValuesRankedMMSpecificity))
+           getGeneValuesGeneLength,
+           getGeneValuesTranscriptCount,
+           getGeneValuesCountsOverlap,
+           getGeneValuesNumJunctions,
+           getGeneValuesIntronicLength,
+           getGeneValuesString))
 }
 
 #' Title
@@ -132,17 +157,23 @@ getAllGeneValues = function(genes,
 
   for(query in queries){
     partialquery = getGeneValues(genes=genes,query=query)
-    fquery = NULL
-    mask = match(genes,partialquery$gene)
-    dummyna = rep(NA,ncol(partialquery) - 1)
-    for(i in 1:length(genes)){
-      if(is.na(mask[i]))
-        fquery = rbind(fquery,dummyna)
-      else
-        fquery = rbind(fquery,partialquery[mask[i],2:ncol(partialquery)])
+    if(sum(genes == partialquery$gene) == length(genes)){
+      toreturn = cbind(toreturn,partialquery[,2:ncol(partialquery),drop=FALSE])
+
+    }else{
+      fquery = NULL
+      mask = match(genes,partialquery$gene)
+      dummyna = rep(NA,ncol(partialquery) - 1)
+      for(i in 1:length(genes)){
+        if(is.na(mask[i]))
+          fquery = rbind(fquery,dummyna)
+        else
+          fquery = rbind(fquery,partialquery[mask[i],2:ncol(partialquery)])
+      }
+      colnames(fquery) = colnames(partialquery)[2:ncol(partialquery)]
+      toreturn = cbind(toreturn,fquery)
     }
-    colnames(fquery) = colnames(partialquery)[2:ncol(partialquery)]
-    toreturn = cbind(toreturn,fquery)
+
   }
   return(toreturn)
 }
@@ -161,34 +192,34 @@ dealWithNA = function(data.in,colindex,how=c("stzero","mean","min")){
   if(how == "stzero"){
     for(x in colindex){
       cat("Dealing with NA in",colnames(data.in)[x],"with stzero\n")
-      cat("% of NA is",sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
+      cat("% of NA is",100*sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
       data.in[is.na(data.in[,x]),x] = 0
     }
   }else if(how == "mean"){
     for(x in colindex){
       cat("Dealing with NA in",colnames(data.in)[x],"with mean\n")
-      cat("% of NA is",sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
+      cat("% of NA is",100*sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
       the.mean = mean(na.omit(data.in[,x]))
       data.in[is.na(data.in[,x]),x] = the.mean
     }
   }else if(how == "meani"){
     for(x in colindex){
       cat("Dealing with NA in",colnames(data.in)[x],"with mean\n")
-      cat("% of NA is",sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
+      cat("% of NA is",100*sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
       the.mean = as.integer(mean(na.omit(data.in[,x])))
       data.in[is.na(data.in[,x]),x] = the.mean
     }
   }else if(how == "min"){
     for(x in colindex){
       cat("Dealing with NA in",colnames(data.in)[x],"with min\n")
-      cat("% of NA is",sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
+      cat("% of NA is",100*sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
       the.min = min(na.omit(data.in[,x]))
       data.in[is.na(data.in[,x]),x] = the.min
     }
   }else if(how == "mode"){
     for(x in colindex){
       cat("Dealing with NA in",colnames(data.in)[x],"with mode\n")
-      cat("% of NA is",sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
+      cat("% of NA is",100*sum(is.na(data.in[,x]))/length(data.in[,x]),"\n")
       vals = unique(na.omit(data.in[,x]))
       tabs = table(na.omit(data.in[,x]))
       the.mode = as.integer(names(tabs)[which.max(tabs)])
@@ -205,35 +236,92 @@ getGeneValues = function(genes,query,...){
 
 getGeneValuesGeneLength = function(genes,drop.na=F){
   cat("Generating GeneLength data for",length(genes),"genes\n")
-  ens.genes = fromGeneName2EnsemblBM(genes)
-  ens.data = gtex.getGeneValuesGeneLength(ens.genes)
-  ens.data$gene = genes
-  return(ens.data)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+  fileout = paste0(system.file("g2pml/", "", package = "G2PML"),"/genelength.txt")
+  datain = read.table(fileout,stringsAsFactors=F,header=T)
+  mask = match(ens.genes,datain$ensembl_gene_id)
+  dataout = NULL
+  j = 1
+  for(i in mask){
+    if(is.na(i)){
+      dataout = rbind(dataout,c(genes[j],NA))
+    }else
+      dataout = rbind(dataout,c(genes[j],abs(datain$end_position[i]-datain$start_position[i])))
+    j = j + 1
+  }
+  colnames(dataout) = c("gene","GeneLength")
+  dataout = as.data.frame(dataout,stringsAsFactors=F)
+  dataout$GeneLength = as.numeric(dataout$GeneLength)
+  dataout$gene = genes
+  return(dataout)
 
 }
 
 getGeneValuesTranscriptCount = function(genes,drop.na=F){
   cat("Generating TranscriptCount data for",length(genes),"genes\n")
-  ens.genes = fromGeneName2EnsemblBM(genes)
-  ens.data = gtex.getGeneValuesTranscriptCount(ens.genes)
-  ens.data$gene = genes
-  return(ens.data)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+  fileout = paste0(system.file("g2pml/", "", package = "G2PML"),
+                   "transcriptcount.txt")
+  datain = read.table(fileout,stringsAsFactors=F,header=T)
+  mask = match(ens.genes,datain$ensembl_gene_id)
+  dataout = NULL
+
+  j = 1
+  for(i in mask){
+    if(is.na(i)){
+      dataout = rbind(dataout,c(genes[j],NA))
+    }else
+      dataout = rbind(dataout,c(genes[j],datain$transcript_count[i]))
+    j = j + 1
+  }
+  colnames(dataout) = c("gene","TranscriptCount")
+  dataout = as.data.frame(dataout,stringsAsFactors=F)
+  dataout$TranscriptCount = as.numeric(dataout$TranscriptCount)
+  dataout$gene = genes
+  return(dataout)
 
 }
 
 getGeneValuesGCcontent = function(genes,drop.na=F){
-  cat("Generating GCcontent data for",length(genes),"genes\n")
-  ens.genes = fromGeneName2EnsemblBM(genes)
-  ens.data = gtex.getGeneValuesGCcontent(ens.genes)
-  ens.data$gene = genes
-  return(ens.data)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+  fileout = paste0(system.file("g2pml/", "", package = "G2PML"),
+                   "gccontent.txt")
+  datain = read.table(fileout,stringsAsFactors=F,header=T)
+  mask = match(ens.genes,datain$ensembl_gene_id)
+  dataout = NULL
+
+  j = 1
+  for(i in mask){
+    if(is.na(i)){
+      dataout = rbind(dataout,c(genes[j],NA))
+    }else
+      dataout = rbind(dataout,c(genes[j],datain$percentage_gene_gc_content[i]))
+    j = j + 1
+  }
+  colnames(dataout) = c("gene","GCcontent")
+  dataout = as.data.frame(dataout,stringsAsFactors=F)
+  dataout$GCcontent = as.numeric(dataout$GCcontent)
+  dataout$gene = genes
+  return(dataout)
 }
 
 getGeneValuesCountsOverlap = function(genes,drop.na=F){
   cat("Generating CountsOverlap data for",length(genes),"genes\n")
-  filein = paste0(gdp(),"g2pml/annotation.csv")
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
   datain = read.csv(filein,stringsAsFactor=F)
-  ens.genes = fromGeneName2EnsemblBM(genes)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
   mask = match(ens.genes,datain$X)
   dataout = NULL
 
@@ -255,9 +343,12 @@ getGeneValuesCountsOverlap = function(genes,drop.na=F){
 
 getGeneValuesCountsProtCodOverlap = function(genes,drop.na=F){
   cat("Generating CountsProtCodOverlap data for",length(genes),"genes\n")
-  filein = paste0(gdp(),"g2pml/annotation.csv")
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
   datain = read.csv(filein,stringsAsFactor=F)
-  ens.genes = fromGeneName2EnsemblBM(genes)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
   mask = match(ens.genes,datain$X)
   dataout = NULL
 
@@ -282,9 +373,12 @@ getGeneValuesCountsProtCodOverlap = function(genes,drop.na=F){
 #of exons, not necessarily with number of transcripts
 getGeneValuesNumJunctions = function(genes,drop.na=F){
   cat("Generating NumJunctions data for",length(genes),"genes\n")
-  filein = paste0(gdp(),"g2pml/annotation.csv")
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
   datain = read.csv(filein,stringsAsFactor=F)
-  ens.genes = fromGeneName2EnsemblBM(genes)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
   mask = match(ens.genes,datain$X)
   dataout = NULL
 
@@ -308,9 +402,12 @@ getGeneValuesNumJunctions = function(genes,drop.na=F){
 #If NA, the gene only has an exon, thus NA is equal to 0
 getGeneValuesIntronicLength = function(genes,drop.na=F){
   cat("Generating IntronicLength data for",length(genes),"genes\n")
-  filein = paste0(gdp(),"g2pml/annotation.csv")
+  filein = paste0(system.file("g2pml/", "", package = "G2PML"),"annotation.csv")
   datain = read.csv(filein,stringsAsFactor=F)
-  ens.genes = fromGeneName2EnsemblBM(genes)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
   mask = match(ens.genes,datain$X)
   dataout = NULL
 
@@ -332,7 +429,7 @@ getGeneValuesIntronicLength = function(genes,drop.na=F){
 
 getGeneValuesDSI = function(genes,drop.na=F){
   cat("Generating Disease specificity index data for",length(genes),"genes\n")
-  disgenet = read.delim(paste0(gdp(),"g2pml/disgenet_allgeneleveldata.tsv"),
+  disgenet = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"disgenet_allgeneleveldata.tsv"),
                         stringsAsFactors=F,sep="\t")
   if(drop.na)
     genes = genes[!is.na(match(genes,disgenet$Symbol))]
@@ -345,7 +442,7 @@ getGeneValuesDSI = function(genes,drop.na=F){
 
 getGeneValuesDPI = function(genes,drop.na=F){
   cat("Generating Disease pleiotropy index data for",length(genes),"genes\n")
-  disgenet = read.delim(paste0(gdp(),"g2pml/disgenet_allgeneleveldata.tsv"),
+  disgenet = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"disgenet_allgeneleveldata.tsv"),
                         stringsAsFactors=F,sep="\t")
   if(drop.na)
     genes = genes[!is.na(match(genes,disgenet$Symbol))]
@@ -356,9 +453,73 @@ getGeneValuesDPI = function(genes,drop.na=F){
   return(toreturn)
 }
 
+getGeneValuesLoFTool = function(genes,drop.na=F){
+  cat("Generating LoFTool scores data for",length(genes),"genes\n")
+  loftool = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                             "genesScoresNBarahona.txt"),
+                      stringsAsFactors=F,sep=" ")
+  pli = tapply(loftool$LoFtool,loftool$Gene,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pli)))]
+  toreturn = cbind(genes,pli[match(genes,names(pli))])
+  colnames(toreturn) = c("gene","LoFTool")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$LoFTool = as.numeric(toreturn$LoFTool)
+  return(toreturn)
+}
+
+#https://academic.oup.com/bioinformatics/article/33/4/471/2525582
+getGeneValuesRVIS = function(genes,drop.na=F){
+  cat("Generating RVIS scores data for",length(genes),"genes\n")
+  rvis = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                              "RVIS_Unpublished_ExACv2_March2017.txt"),
+                       stringsAsFactors=F,sep="\t")
+  pli = tapply(rvis$OEratio,rvis$gene,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pli)))]
+  toreturn = cbind(genes,pli[match(genes,names(pli))])
+  colnames(toreturn) = c("gene","RVIS")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$RVIS = as.numeric(toreturn$RVIS)
+  return(toreturn)
+}
+
+#http://genetics.bwh.harvard.edu/genescores/selection.html
+getGeneValuespAD = function(genes,drop.na=F){
+  cat("Generating probability of AD Model of inheritance scores data for",length(genes),"genes\n")
+  pad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                           "moi.txt"),
+                    stringsAsFactors=F,sep="\t")
+  pli = tapply(pad$p_AD,pad$gene_symbol,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pli)))]
+  toreturn = cbind(genes,pli[match(genes,names(pli))])
+  colnames(toreturn) = c("gene","pAD")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$pAD = as.numeric(toreturn$pAD)
+  return(toreturn)
+}
+
+#http://genetics.bwh.harvard.edu/genescores/selection.html
+getGeneValuespAR = function(genes,drop.na=F){
+  cat("Generating probability of AR Model of inheritance scores data for",length(genes),"genes\n")
+  pad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                          "moi.txt"),
+                   stringsAsFactors=F,sep="\t")
+  pli = tapply(pad$p_AR,pad$gene_symbol,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pli)))]
+  toreturn = cbind(genes,pli[match(genes,names(pli))])
+  colnames(toreturn) = c("gene","pAR")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$pAR = as.numeric(toreturn$pAR)
+  return(toreturn)
+}
+
+
 getGeneValuesgnomadpLI = function(genes,drop.na=F){
   cat("Generating gnomADpLI data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(gdp(),"g2pml/gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pli = tapply(gnomad$pLI,gnomad$gene,max)
   if(drop.na)
@@ -372,7 +533,7 @@ getGeneValuesgnomadpLI = function(genes,drop.na=F){
 
 getGeneValuesgnomadpRec = function(genes,drop.na=F){
   cat("Generating gnomADpRec data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(gdp(),"g2pml/gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pRec = tapply(gnomad$pRec,gnomad$gene,max)
   if(drop.na)
@@ -386,7 +547,7 @@ getGeneValuesgnomadpRec = function(genes,drop.na=F){
 
 getGeneValuesgnomadpMiss = function(genes,drop.na=F){
   cat("Generating gnomADpMiss data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(gdp(),"g2pml/gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pMiss = tapply(gnomad$mis_z,gnomad$gene,max)
   if(drop.na)
@@ -398,9 +559,36 @@ getGeneValuesgnomadpMiss = function(genes,drop.na=F){
   return(toreturn)
 }
 
+getGeneValuesgnomadoeLoF = function(genes,drop.na=F){
+  cat("Generating gnomADoeLoF data for",length(genes),"genes\n")
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+                      stringsAsFactors=F,sep="\t")
+  pMiss = tapply(gnomad$oe_lof,gnomad$gene,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pMiss)))]
+  toreturn = cbind(genes,pMiss[match(genes,names(pMiss))])
+  colnames(toreturn) = c("gene","gnomadOELoF")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$gnomadOELoF = as.numeric(toreturn$gnomadOELoF)
+  return(toreturn)
+}
+
+getGeneValuesgnomadoeMiss = function(genes,drop.na=F){
+  cat("Generating gnomADoeMiss data for",length(genes),"genes\n")
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
+                      stringsAsFactors=F,sep="\t")
+  pMiss = tapply(gnomad$oe_mis,gnomad$gene,max)
+  if(drop.na)
+    genes = genes[!is.na(match(genes,names(pMiss)))]
+  toreturn = cbind(genes,pMiss[match(genes,names(pMiss))])
+  colnames(toreturn) = c("gene","gnomadOEMiss")
+  toreturn = as.data.frame(toreturn,stringsAsFactors=F)
+  toreturn$gnomadOEMiss = as.numeric(toreturn$gnomadOEMiss)
+  return(toreturn)
+}
 getGeneValuesgnomadpNull = function(genes,drop.na=F){
   cat("Generating gnomADpNull data for",length(genes),"genes\n")
-  gnomad = read.delim(paste0(gdp(),"g2pml/gnomADrelease_2.1_ht_constraint_constraint.txt"),
+  gnomad = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pNull = tapply(gnomad$pNull,gnomad$gene,max)
   if(drop.na)
@@ -414,7 +602,7 @@ getGeneValuesgnomadpNull = function(genes,drop.na=F){
 
 getGeneValuesExACpLI = function(genes,drop.na=F){
   cat("Generating ExACpLI data for",length(genes),"genes\n")
-  exac = read.delim(paste0(gdp(),"g2pml/fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
+  exac = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
                     stringsAsFactors=F,sep="\t")
   pli = tapply(exac$pLI,exac$gene,max)
   if(drop.na)
@@ -428,7 +616,7 @@ getGeneValuesExACpLI = function(genes,drop.na=F){
 
 getGeneValuesExACpRec = function(genes,drop.na=F){
   cat("Generating ExACpRec data for",length(genes),"genes\n")
-  exac = read.delim(paste0(gdp(),"g2pml/fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
+  exac = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
                     stringsAsFactors=F,sep="\t")
   pli = tapply(exac$pRec,exac$gene,max)
   if(drop.na)
@@ -442,7 +630,7 @@ getGeneValuesExACpRec = function(genes,drop.na=F){
 
 getGeneValuesExACpNull = function(genes,drop.na=F){
   cat("Generating ExACpNull data for",length(genes),"genes\n")
-  exac = read.delim(paste0(gdp(),"g2pml/fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
+  exac = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
                     stringsAsFactors=F,sep="\t")
   pli = tapply(exac$pNull,exac$gene,max)
   if(drop.na)
@@ -456,7 +644,7 @@ getGeneValuesExACpNull = function(genes,drop.na=F){
 
 getGeneValuesExACpMiss = function(genes,drop.na=F){
   cat("Generating ExACpMiss data for",length(genes),"genes\n")
-  exac = read.delim(paste0(gdp(),"g2pml/fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
+  exac = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),"fordist_cleaned_exac_r03_march16_z_pli_rec_null_data.txt"),
                     stringsAsFactors=F,sep="\t")
   #pli = tapply(exac$mu_mis,exac$gene,max)
   pli = tapply(exac$mis_z,exac$gene,max)
@@ -472,7 +660,8 @@ getGeneValuesExACpMiss = function(genes,drop.na=F){
 
 
 getGeneValuesHexConstExons = function(genes,drop.na=F){
-  hexevent = read.delim(paste0(gdp(),"g2pml/hexeventdbFull.txt"),
+  hexevent = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "hexeventdbFull.txt"),
                         stringsAsFactors=F,sep="\t")
   exons = table(hexevent$genename)
   exons = exons[names(exons) != "onlyEST"]
@@ -487,7 +676,8 @@ getGeneValuesHexConstExons = function(genes,drop.na=F){
 }
 
 getGeneValuesHexESTCount = function(genes,drop.na=F){
-  hexevent = read.delim(paste0(gdp(),"g2pml/hexeventdbFull.txt"),
+  hexevent = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "hexeventdbFull.txt"),
                         stringsAsFactors=F,sep="\t")
   exons = tapply(hexevent$count,as.factor(hexevent$genename),sum)
   exons = exons[names(exons) != "onlyEST"]
@@ -503,7 +693,8 @@ getGeneValuesHexESTCount = function(genes,drop.na=F){
 
 getGeneValuesHexAlt3EST = function(genes,drop.na=F){
   cat("Generating Alt 3' EST data for",length(genes),"genes\n")
-  hexevent = read.delim(paste0(gdp(),"g2pml/hexeventdbFull.txt"),
+  hexevent = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "hexeventdbFull.txt"),
                         stringsAsFactors=F,sep="\t")
   exons = tapply(hexevent$alt3,as.factor(hexevent$genename),sum)
   exons = exons[names(exons) != "onlyEST"]
@@ -520,7 +711,8 @@ getGeneValuesHexAlt3EST = function(genes,drop.na=F){
 
 getGeneValuesHexAlt5EST = function(genes,drop.na=F){
   cat("Generating Alt 5' EST data for",length(genes),"genes\n")
-  hexevent = read.delim(paste0(gdp(),"g2pml/hexeventdbFull.txt"),
+  hexevent = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "hexeventdbFull.txt"),
                         stringsAsFactors=F,sep="\t")
   exons = tapply(hexevent$alt5,as.factor(hexevent$genename),sum)
   exons = exons[names(exons) != "onlyEST"]
@@ -534,9 +726,10 @@ getGeneValuesHexAlt5EST = function(genes,drop.na=F){
   return(toreturn)
 }
 
-getGeneValuesStringCombinedHugo = function(genes,drop.na=F){
+getGeneValuesString = function(genes,drop.na=F){
   cat("Generating String experimental score data for",length(genes),"genes\n")
-  domino = read.delim(paste0(gdp(),"g2pml/domino_score_all_final_03.04.17.txt"),
+  domino = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                             "domino_score_all_final_03.04.17.txt"),
                       stringsAsFactors=F,sep="\t")
   domino$Gene = fromSymbol2Hugo(domino$Gene)
   #pli = tapply(exac$mu_mis,exac$gene,max)
@@ -546,15 +739,16 @@ getGeneValuesStringCombinedHugo = function(genes,drop.na=F){
     stringsc = na.omit(stringsc)
   }
   toreturn = cbind(genes,stringsc)
-  colnames(toreturn) = c("gene","StringCombined")
+  colnames(toreturn) = c("gene","String")
   toreturn = as.data.frame(toreturn,stringsAsFactors=F)
-  toreturn$StringCombined = as.numeric(toreturn$StringCombined)
+  toreturn$String = as.numeric(toreturn$String)
   return(toreturn)
 }
 
 getGeneValuesHexAlt3.5EST = function(genes,drop.na=F){
   cat("Generating Alt 3' & 5' EST data for",length(genes),"genes\n")
-  hexevent = read.delim(paste0(gdp(),"g2pml/hexeventdbFull.txt"),
+  hexevent = read.delim(paste0(system.file("g2pml/", "", package = "G2PML"),
+                               "hexeventdbFull.txt"),
                         stringsAsFactors=F,sep="\t")
   exons = tapply(hexevent$alt3.5,as.factor(hexevent$genename),sum)
   exons = exons[names(exons) != "onlyEST"]
@@ -569,31 +763,35 @@ getGeneValuesHexAlt3.5EST = function(genes,drop.na=F){
 }
 
 availableSpecificityData = function(ens.genes){
-  expr = readRDS(paste0(gtex.gdp(),"g2pml/adjmatrix.rds"))
+  expr = readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                        "adjmatrix.rds"))
   return(ens.genes %in% colnames(expr))
 }
 
 getSpecificityMatrix = function(which.one,fold=3,visibility=5){
   if(which.one == "Expression")
-    return(readRDS(paste0(gtex.gdp(),"g2pml/exprmatrix.",fold,".",visibility,".rds")))
+    return(readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                          "exprmatrix.",fold,".",visibility,".rds")))
   if(which.one == "Adjacency")
-    return(readRDS(paste0(gtex.gdp(),"g2pml/adjmatrix.",fold,".",visibility,".rds")))
+    return(readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                          "adjmatrix.",fold,".",visibility,".rds")))
   if(which.one == "RankedMM")
-    return(readRDS(paste0(gtex.gdp(),"g2pml/rankedmmmatrix.",fold,".",visibility,".rds")))
+    return(readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                          "rankedmmmatrix.",fold,".",visibility,".rds")))
   return(NULL)
 }
 getGeneValuesExpressionSpecificity = function(genes,use.cluster=F,ens.correction=NULL,
                                               fold=3,visibility=5){
   cat("Generating expression data specificity for",length(genes),"genes\n")
-  if(!use.cluster){
-    expr = readRDS(paste0(gtex.gdp(),"g2pml/exprmatrix.",fold,".",visibility,".rds"))
-    rownames(expr) = unlist(lapply(rownames(expr),gtex.fromLongToShortTissue))
-  }else
-    expr = readRDS(paste0(gtex.gdp(),"/tissuespecificity/exprmatrixclustered.rds"))
+  expr = readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                        "exprmatrix.",fold,".",visibility,".rds"))
+  rownames(expr) = unlist(lapply(rownames(expr),fromLong2ShortTissue))
 
-  if(!startsWith(genes[1],"ENSG"))
-    #ens.genes = fromGeneName2EnsemblBM(genes)
-    ens.genes = fromGeneName2Ensembl(genes)
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+
   if(!is.null(ens.correction)){
     for(i in seq(from=1,to=length(ens.correction),by=2)){
       mask = which(ens.genes == ens.correction[i])
@@ -621,15 +819,13 @@ getGeneValuesExpressionSpecificity = function(genes,use.cluster=F,ens.correction
 getGeneValuesAdjacencySpecificity = function(genes,use.cluster=F,ens.correction=NULL,
                                              fold=3,visibility=5){
   cat("Generating adjacency data specificity for",length(genes),"genes\n")
-  if(!use.cluster){
-    expr = readRDS(paste0(gtex.gdp(),"g2pml/adjmatrix.",fold,".",visibility,".rds"))
-    rownames(expr) = unlist(lapply(rownames(expr),gtex.fromLongToShortTissue))
-  }else
-    expr = readRDS(paste0(gtex.gdp(),"/tissuespecificity/adjmatrixclustered.rds"))
-  #if(!startsWith(genes[1],"ENSG"))
-  ens.genes = fromGeneName2Ensembl(genes)
-  #else
-  #	ens.genes = genes
+  expr = readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),"adjmatrix.",fold,".",visibility,".rds"))
+  rownames(expr) = unlist(lapply(rownames(expr),fromLong2ShortTissue))
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+
   if(!is.null(ens.correction)){
     for(i in seq(from=1,to=length(ens.correction),by=2)){
       mask = which(ens.genes == ens.correction[i])
@@ -655,18 +851,19 @@ getGeneValuesAdjacencySpecificity = function(genes,use.cluster=F,ens.correction=
 
 }
 
-getGeneValuesRankedMMSpecificity = function(genes,use.cluster=F,ens.correction=NULL,
+getGeneValuesRankedMMSpecificity = function(genes,use.cluster=F,
+                                            ens.correction=NULL,
                                             fold=3,visibility=5){
+
   cat("Generating Ranked MM data specificity for",length(genes),"genes\n")
-  if(!use.cluster){
-    expr = readRDS(paste0(gtex.gdp(),"g2pml/rankedmmmatrix.",fold,".",visibility,".rds"))
-    rownames(expr) = unlist(lapply(rownames(expr),gtex.fromLongToShortTissue))
-  }else
-    expr = readRDS(paste0(gtex.gdp(),"/tissuespecificity/rankedmmmatrixclustered.rds"))
-  #if(!startsWith(genes[1],"ENSG"))
-  ens.genes = fromGeneName2Ensembl(genes)
-  #else
-  #	ens.genes = genes
+  expr = readRDS(paste0(system.file("g2pml/", "", package = "G2PML"),
+                        "rankedmmmatrix.",fold,".",visibility,".rds"))
+  rownames(expr) = unlist(lapply(rownames(expr),fromLong2ShortTissue))
+  if(is.null(names(genes)))
+    ens.genes = fromGeneName2EnsemblBM(genes)
+  else
+    ens.genes = names(genes)
+
   if(!is.null(ens.correction)){
     for(i in seq(from=1,to=length(ens.correction),by=2)){
       mask = which(ens.genes == ens.correction[i])
@@ -835,13 +1032,14 @@ fromGenes2MLData = function(genes,
 
 }
 
+
 genLearningDataSet = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
                               sep=",",
                               filter=NULL,
                               newdata=T){
 
   f.in = paste0(system.file("g2pml/", "", package = "G2PML"),
-                "/mlDBGtexGenesWGHugoString.txt")
+                "/mlDBMarch2019.txt")
 
   genes = casecontrolset$gene
   mldata = read.delim(f.in,stringsAsFactors=F,sep=sep)
@@ -940,3 +1138,183 @@ getCodingGenome = function(){
   genes = fromSymbol2Hugo(genes)
   return(na.omit(genes))
 }
+
+fromGeneName2EnsemblBM = function(genes,use38=T){
+
+  if(use38){
+    ensembl <- useMart(host="www.ensembl.org",
+                       biomart="ENSEMBL_MART_ENSEMBL",
+                       dataset="hsapiens_gene_ensembl")
+    external.gene.att = "external_gene_name"
+  }else{
+    ensembl <- useMart(host="jun2013.archive.ensembl.org",
+                       biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
+    external.gene.att = "external_gene_id"
+  }
+
+  attributes <- c(external.gene.att,"ensembl_gene_id")
+  genes.with.name = getBM(attributes=attributes, filters="hgnc_symbol", values=genes,mart=ensembl)
+  cat("From",length(genes),"gene IDs we got",nrow(genes.with.name),"genes with Ensemble name\n")
+  #if(nrow(genes.with.name) >= length(genes))
+  thematch = match(genes,genes.with.name$external_gene_name)
+  outgenes = genes.with.name[,2][thematch]
+  outgenes[is.na(thematch)] = genes[is.na(thematch)]
+  cat("fromGeneName2EnsemblBM, couldn't convert",sum(is.na(thematch)),"genes\n")
+  return(outgenes)
+}
+
+fromLong2ShortTissue = function(tissue){
+
+  if(tissue == "Adipose - Subcutaneous")
+    return("AdiposeSub")
+  if(tissue == "Adipose - Visceral (Omentum)")
+    return("AdiposeVisceral")
+  if(tissue == "Adrenal Gland")
+    return("AdrenalGland")
+  if(tissue == "Artery - Aorta")
+    return("ArteryAorta")
+  if(tissue == "Artery - Coronary")
+    return("ArteryCoronary")
+  if(tissue == "Artery - Tibial")
+    return("ArteryTibial")
+  if(tissue == "Brain - Amygdala")
+    return("Amygdala")
+  if(tissue == "Brain - Substantia nigra")
+    return("Substantianigra")
+  if(tissue == "Brain - Spinal cord (cervical c-1)")
+    return("Spinalcord")
+  if(tissue == "Brain - Anterior cingulate cortex (BA24)")
+    return("AntCingCortex")
+  if(tissue == "Brain - Caudate (basal ganglia)")
+    return("Caudate")
+  if(tissue == "Brain - Cerebellar Hemisphere")
+    return("CerebHemisphere")
+  if(tissue == "Brain - Cerebellum")
+    return("Cerebellum")
+  if(tissue == "Brain - Cortex")
+    return("Cortex")
+  if(tissue == "Brain - Frontal Cortex (BA9)")
+    return("FCortex")
+  if(tissue == "Brain - Hippocampus")
+    return("Hippocampus")
+  if(tissue == "Brain - Hypothalamus")
+    return("Hypothalamus")
+  if(tissue == "Brain - Nucleus accumbens (basal ganglia)")
+    return("NucAccumbens")
+  if(tissue == "Brain - Putamen (basal ganglia)")
+    return("Putamen")
+
+  if(tissue == "Breast - Mammary Tissue")
+    return("Breast")
+
+  if(tissue == "Cells - EBV-transformed lymphocytes")
+    return("CellsLymphocytes")
+  if(tissue == "Cells - Leukemia cell line (CML)")
+    return("CellsLeukemiaCL")
+
+  if(tissue == "Cells - Transformed fibroblasts")
+    return("CellsFirbroblasts")
+
+  if(tissue == "Cells - Transformed firbroblasts")
+    return("CellsFirbroblasts")
+
+  if(tissue == "Colon - Sigmoid")
+    return("ColonSigmoid")
+  if(tissue == "Colon - Transverse")
+    return("ColonTransverse")
+  if(tissue == "Esophagus - Gastroesophageal Junction")
+    return("EsophGastJunction")
+  if(tissue == "Esophagus - Mucosa")
+    return("EsophMucosa")
+  if(tissue == "Esophagus - Muscularis")
+    return("EsophMuscularis")
+
+
+
+  if(tissue == "Heart - Atrial Appendage")
+    return("HeartAtrialApp")
+  if(tissue == "Heart - Left Ventricle")
+    return("HeartLeftVent")
+  if(tissue == "Muscle - Skeletal")
+    return("MuscleSkeletal")
+  if(tissue == "Nerve - Tibial")
+    return("NerveTibial")
+  if(tissue == "Small Intestine - Terminal Ileum")
+    return("SmallIntestine")
+
+  if(tissue == "Skin - Not Sun Exposed (Suprapubic)")
+    return("SkinSuprapubic")
+  if(tissue == "Skin - Sun Exposed (Lower leg)")
+    return("SkinLowerLeg")
+  if(tissue == "Whole Blood")
+    return("WholeBlood")
+  return(tissue)
+
+}
+
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getPanelsFromPanelApp = function(){
+  req <- curl::curl_fetch_memory("panelapp.genomicsengland.co.uk/WebServices/list_panels/")
+  myjson = jsonlite::fromJSON(rawToChar(req$content))
+  myjson$results$Relevant_disorders = NULL
+  return(myjson$result)
+}
+
+#' Title
+#'
+#' @param disorder
+#' @param panel
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getPanelFromPanelApp = function(disorder="Neurology and neurodevelopmental disorders",
+                                panel="Parkinson Disease and Complex Parkinsonism")
+{
+  panels = getPanelsFromPanelApp()
+  if(!(panel %in% panels$Name)){
+    cat("Panel",panel,"not found at the Panel App, available panels are\n")
+    print(panels$Name)
+  }
+  stopifnot(panel %in% panels$Name)
+  panelweb = gsub(" ","%20",panel)
+  req <- curl::curl_fetch_memory(paste0("panelapp.genomicsengland.co.uk/WebServices/get_panel/",
+                                    panelweb,"/"))
+    myjson = jsonlite::fromJSON(rawToChar(req$content))
+    out = cbind(myjson$result$Genes$GeneSymbol,myjson$result$Genes$LevelOfConfidence,
+                myjson$result$Genes$ModeOfInheritance,myjson$result$Genes$ModeOfPathogenicity)
+    colnames(out) = c("GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity")
+  return(as.data.frame(out,stringsAsFactors=F))
+}
+
+#' Title
+#'
+#' @param disorder
+#' @param panel
+#' @param color
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getGenesFromPanelApp = function(disorder="Neurology and neurodevelopmental disorders",
+                     panel="Parkinson Disease and Complex Parkinsonism",
+                     color){
+
+  if(color == "red")
+    evidence = "LowEvidence"
+  else if(color == "amber")
+    evidence = "ModerateEvidence"
+  else
+    evidence = "HighEvidence"
+  genes = getPanelFromPanelApp(disorder,panel)
+  return(genes$GeneSymbol[genes$LevelOfConfidence == evidence])
+}
+
+

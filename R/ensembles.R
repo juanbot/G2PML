@@ -1366,7 +1366,6 @@ evalEnsemblesOneShot = function(ensembles,
                                     hits$newgenes,
                                     hits$hits,
                                     hits$fold))
-          #print(allhits)
         }
 
         cat("Trying gProfilerR query for gene quality",q,"and fold quality",qkfold,
@@ -1396,7 +1395,7 @@ evalEnsemblesOneShot = function(ensembles,
       globalallhits = rbind(globalallhits,allhits)
     }
     if(!is.null(hitsperfold)){
-      c(i,q,untilTree,length(milked),hits$newgenes,hits$hits,hits$fold)
+      #c(i,q,untilTree,length(milked),hits$newgenes,hits$hits,hits$fold)
       colnames(hitsperfold) = c("panel","method","fold","q","trees","predictions","evalgenes","hits","enrichment")
       globalhitsperfold = rbind(globalhitsperfold,hitsperfold)
     }
