@@ -1317,11 +1317,12 @@ evalEnsemblesOneShot = function(ensembles,
       kappa = c(kappa,unlist(ensembles[[i]]$evaluation[qmeasure]))
     }
   }
-  for(q in c(0.5,0.8,0.9,0.99)){
+  for(q in c(0.5,0.6,0.7,0.8,0.9,0.99)){
     diseasegenes = NULL
     hitsperfold = NULL
     allhits = NULL
 
+    allevaldisease = NULL
     for(i in 1:k){
       cat("Now we generate predictions\n")
 
@@ -1333,7 +1334,7 @@ evalEnsemblesOneShot = function(ensembles,
       hits = getHits(panel=ensembles[[i]]$panel,
                      genes=milked,
                      brandnew=ensembles[[i]]$evaldisease)
-
+      allevaldisease = c(allevaldisease,ensembles[[i]]$evaldisease)
       hitsperfold = rbind(hitsperfold,c(ensembles[[i]]$panel,
                                         ensembles[[i]]$method,
                                         i,q,untilTree,
@@ -1344,58 +1345,69 @@ evalEnsemblesOneShot = function(ensembles,
       diseasegenes = c(diseasegenes, milked)
 
     }
+    allevaldisease = unique(allevaldisease)
+    diseasegenes = table(diseasegenes)
+    mylocalgenes = names(diseasegenes)[diseasegenes/k >= q]
 
-    if(length(diseasegenes) > 0){
-      diseasegenes = table(diseasegenes)
-      #diseasegenes = as.numeric(diseasegenes/used)
-      diseasegenes = sort(diseasegenes,decreasing=T)
-      genes = names(diseasegenes)
-      diseasegenes = as.vector(diseasegenes)
-      diseasegenes = diseasegenes/k
+    #Now the final "all ensemble" predictions
+    hitsperfold = rbind(hitsperfold,c(ensembles[[i]]$panel,
+                                      "multimethod",
+                                      i+1,
+                                      q,
+                                      untilTree,
+                                      length(mylocalgenes),
+                                      length(allevaldisease),
+                                      sum(allevaldisease %in% mylocalgenes),
+                                      hits$fold))
 
-      finaltable = as.data.frame(cbind(genes=genes,quality=diseasegenes),stringsAsFactors=F)
-      colnames(finaltable) = c("gene","quality")
-      allpredictions = rbind(allpredictions,cbind(rep(ensembles[[i]]$panel,nrow(finaltable)),finaltable))
-      for(qkfold in c(0,0.3,0.5)){
-        localfinaltable = finaltable
-        localfinaltable = localfinaltable[as.numeric(localfinaltable[,2]) > qkfold,]
 
-        #Using all
-        hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1],brandnew=ensembles[[i]]$evaldisease)
+    #diseasegenes = as.numeric(diseasegenes/used)
+    diseasegenes = sort(diseasegenes,decreasing=T)
+    genes = names(diseasegenes)
+    diseasegenes = as.vector(diseasegenes)
+    diseasegenes = diseasegenes/k
 
-        #Now the hits
-        hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1])
-        if(!is.null(hits)){
-          allhits = rbind(allhits,c(ensembles[[i]]$panel,
-                                    ensembles[[i]]$method,
-                                    q,
-                                    qkfold,
-                                    nrow(localfinaltable),
-                                    hits$newgenes,
-                                    hits$hits,
-                                    hits$fold))
-        }
+    finaltable = as.data.frame(cbind(genes=genes,quality=diseasegenes),stringsAsFactors=F)
+    colnames(finaltable) = c("gene","quality")
+    allpredictions = rbind(allpredictions,cbind(rep(ensembles[[i]]$panel,nrow(finaltable)),finaltable))
+    for(qkfold in c(0,0.3,0.5)){
+      localfinaltable = finaltable
+      localfinaltable = localfinaltable[as.numeric(localfinaltable[,2]) > qkfold,]
 
-        cat("Trying gProfilerR query for gene quality",q,"and fold quality",qkfold,
-            "and",nrow(localfinaltable),"genes\n")
-        if(nrow(localfinaltable) > 0 & nrow(localfinaltable) < 4000 & doGO){
-          cat("Doing gProfilerR query for gene quality",q,"and fold quality",qkfold,
-              ",yields",nrow(localfinaltable),"genes\n")
-          res = gProfileR::gprofiler(query=localfinaltable[,1],
-                                     src_filter=c("GO","KEGG","REAC","HP","OMIM"))
-          #res=matrix(nrow=0,ncol=0)
-          cat("We got",nrow(res),"enrichment terms\n")
-          if(nrow(res) > 0){
-            res$intersection = NULL
-            write.table(res,paste0(out.path,"/",localsaveprefix,"_predsGO_",q,"_",qkfold,".tsv"),
-                        row.names=F,quote=F,sep="\t")
+      #Using all
+      hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1],
+                     brandnew=ensembles[[i]]$evaldisease)
 
-          }
-
-        }
+      #Now the hits
+      hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1])
+      if(!is.null(hits)){
+        allhits = rbind(allhits,c(ensembles[[i]]$panel,
+                                  ensembles[[i]]$method,
+                                  q,
+                                  qkfold,
+                                  nrow(localfinaltable),
+                                  hits$newgenes,
+                                  hits$hits,
+                                  hits$fold))
       }
-    }else{
-      cat("No genes were predicted at any cutoff\n")
+
+      cat("Trying gProfilerR query for gene quality",q,"and fold quality",qkfold,
+          "and",nrow(localfinaltable),"genes\n")
+      if(nrow(localfinaltable) > 0 & nrow(localfinaltable) < 4000 & doGO){
+        cat("Doing gProfilerR query for gene quality",q,"and fold quality",qkfold,
+            ",yields",nrow(localfinaltable),"genes\n")
+        res = gProfileR::gprofiler(query=localfinaltable[,1],
+                                   src_filter=c("GO","KEGG","REAC","HP","OMIM"))
+        #res=matrix(nrow=0,ncol=0)
+        cat("We got",nrow(res),"enrichment terms\n")
+        if(nrow(res) > 0){
+          res$intersection = NULL
+          write.table(res,paste0(out.path,"/",localsaveprefix,"_predsGO_",q,"_",qkfold,".tsv"),
+                      row.names=F,quote=F,sep="\t")
+
+        }
+
+      }
     }
 
     if(!is.null(allhits)){
@@ -1407,21 +1419,24 @@ evalEnsemblesOneShot = function(ensembles,
     }
 
   }
-  colnames(globalallhits) = c("panel","method","ensembleq","kfoldq","predictions","newgenes","hits","enrichment")
+  if(!is.null(globalallhits)){
+    colnames(globalallhits) = c("panel","method","ensembleq","kfoldq","predictions","newgenes","hits","enrichment")
+  }
+
   colnames(globalhitsperfold) = c("panel","method","fold","q","trees","predictions","evalgenes","hits","enrichment")
   allkappas = c(k,mean(kappa),max(kappa),min(kappa))
   names(allkappas) = c("folds","meankappa","maxkappa","minkappa")
+  mask = globalhitsperfold[,"fold"] != as.character(k + 1)
+  iplusoneevals = globalhitsperfold[mask,]
+  qfold = iplusoneevals[which.max(as.numeric(iplusoneevals[,"enrichment"])),"q"]
 
   q=tapply(as.numeric(globalhitsperfold[,"enrichment"]),globalhitsperfold[,"q"],mean)
   bestq = as.numeric(names(q)[which.max(q)][1])
-  kfoldqs = tapply(as.numeric(globalallhits[,"enrichment"]),globalallhits[,"kfoldq"],mean)
-  bestkfoldq = as.numeric(names(kfoldqs)[which.max(kfoldqs)][1])
 
   #Now the final predictions
   diseasegenes = NULL
   for(i in 1:k){
     cat("Now we generate predictions\n")
-
     milked = milkEnsemble(ensemble = ensembles[[i]],
                           cutoff=bestq,
                           trees=untilTree,
@@ -1432,7 +1447,6 @@ evalEnsemblesOneShot = function(ensembles,
                    brandnew=ensembles[[i]]$evaldisease)
 
     diseasegenes = c(diseasegenes, milked)
-
   }
 
   if(length(diseasegenes) > 0){
@@ -1442,14 +1456,15 @@ evalEnsemblesOneShot = function(ensembles,
     diseasegenes = as.vector(diseasegenes)
     diseasegenes = diseasegenes/k
   }
-  finalgenes = genes[diseasegenes >= bestkfoldq]
+
   names(diseasegenes) = genes
+  finalpreds = genes[diseasegenes >= qfold]
   return(list(hits=globalallhits,
               hitsperfold=globalhitsperfold,
-              predictions=finalgenes,
               allpredictions=diseasegenes,
               bestq=bestq,
-              bestkfoldq=bestkfoldq,
+              qfold=qfold,
+              finalpreds=finalpreds,
               kappa=allkappas))
 }
 
