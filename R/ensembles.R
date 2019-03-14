@@ -1281,7 +1281,7 @@ g2pmlpredict = function(preds,ratio=0.5,useDontKnow=F){
 }
 
 evalEnsemblesOneShot = function(ensembles,
-                                useppv=T,
+                                useppv=F,
                                 cutoff=0.7,
                                 qmeasure="mcc",
                                 doGO=F){
@@ -1292,14 +1292,15 @@ evalEnsemblesOneShot = function(ensembles,
 
   allpredictions = NULL
   alldiseasegenes = NULL
-  allhits = NULL
-  hitsperfold = NULL
+
 
   results = NULL
-  kappa = 0
   modelcount = 0
   used = 0
   evalgenes = NULL
+  allkappas = NULL
+  kappa = NULL
+
   for(i in 1:k){
     untilTree = ensembles[[i]]$nboot
     #for(untilTree in 1:ensembles[[1]]$nboot){
@@ -1310,21 +1311,25 @@ evalEnsemblesOneShot = function(ensembles,
                                      cutoff=cutoff,
                                      trees=untilTree)
     ensembles[[i]]$evaluation = evaluation
+    if(useppv){
+      kappa = c(kappa,ensembles[[i]]$evaluation$ppv)
+    }else{
+      kappa = c(kappa,unlist(ensembles[[i]]$evaluation[qmeasure]))
+    }
   }
-
   for(q in c(0.5,0.8,0.9,0.99)){
     diseasegenes = NULL
+    hitsperfold = NULL
+    allhits = NULL
+
     for(i in 1:k){
       cat("Now we generate predictions\n")
-      if(useppv){
-        kappa = kappa + ensembles[[i]]$evaluation$ppv
-      }else{
-        kappa = kappa + unlist(ensembles[[i]]$evaluation[qmeasure])
-      }
+
       milked = milkEnsemble(ensemble = ensembles[[i]],
                             cutoff=q,
                             trees=untilTree,
-                            remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"])) #,ensembles[[i]]$evaldisease))
+                            remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"]))
+
       hits = getHits(panel=ensembles[[i]]$panel,
                      genes=milked,
                      brandnew=ensembles[[i]]$evaldisease)
@@ -1354,6 +1359,9 @@ evalEnsemblesOneShot = function(ensembles,
       for(qkfold in c(0,0.3,0.5)){
         localfinaltable = finaltable
         localfinaltable = localfinaltable[as.numeric(localfinaltable[,2]) > qkfold,]
+
+        #Using all
+        hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1],brandnew=ensembles[[i]]$evaldisease)
 
         #Now the hits
         hits = getHits(panel=ensembles[[i]]$panel,genes=localfinaltable[,1])
@@ -1391,17 +1399,58 @@ evalEnsemblesOneShot = function(ensembles,
     }
 
     if(!is.null(allhits)){
-      colnames(allhits) = c("panel","method","ensembleq","kfoldq","predictions","newgenes","hits","enrichment")
       globalallhits = rbind(globalallhits,allhits)
     }
     if(!is.null(hitsperfold)){
       #c(i,q,untilTree,length(milked),hits$newgenes,hits$hits,hits$fold)
-      colnames(hitsperfold) = c("panel","method","fold","q","trees","predictions","evalgenes","hits","enrichment")
       globalhitsperfold = rbind(globalhitsperfold,hitsperfold)
     }
 
   }
-  return(list(hits=globalallhits,hitsperfold=globalhitsperfold,predictions=finaltable))
+  colnames(globalallhits) = c("panel","method","ensembleq","kfoldq","predictions","newgenes","hits","enrichment")
+  colnames(globalhitsperfold) = c("panel","method","fold","q","trees","predictions","evalgenes","hits","enrichment")
+  allkappas = c(k,mean(kappa),max(kappa),min(kappa))
+  names(allkappas) = c("folds","meankappa","maxkappa","minkappa")
+
+  q=tapply(as.numeric(globalhitsperfold[,"enrichment"]),globalhitsperfold[,"q"],mean)
+  bestq = as.numeric(names(q)[which.max(q)][1])
+  kfoldqs = tapply(as.numeric(globalallhits[,"enrichment"]),globalallhits[,"kfoldq"],mean)
+  bestkfoldq = as.numeric(names(kfoldqs)[which.max(kfoldqs)][1])
+
+  #Now the final predictions
+  diseasegenes = NULL
+  for(i in 1:k){
+    cat("Now we generate predictions\n")
+
+    milked = milkEnsemble(ensemble = ensembles[[i]],
+                          cutoff=bestq,
+                          trees=untilTree,
+                          remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"]))
+
+    hits = getHits(panel=ensembles[[i]]$panel,
+                   genes=milked,
+                   brandnew=ensembles[[i]]$evaldisease)
+
+    diseasegenes = c(diseasegenes, milked)
+
+  }
+
+  if(length(diseasegenes) > 0){
+    diseasegenes = table(diseasegenes)
+    diseasegenes = sort(diseasegenes,decreasing=T)
+    genes = names(diseasegenes)
+    diseasegenes = as.vector(diseasegenes)
+    diseasegenes = diseasegenes/k
+  }
+  finalgenes = genes[diseasegenes >= bestkfoldq]
+  names(diseasegenes) = genes
+  return(list(hits=globalallhits,
+              hitsperfold=globalhitsperfold,
+              predictions=finalgenes,
+              allpredictions=diseasegenes,
+              bestq=bestq,
+              bestkfoldq=bestkfoldq,
+              kappa=allkappas))
 }
 
 evalEnsembleOneShot = function(ensemble,
