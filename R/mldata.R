@@ -959,7 +959,7 @@ fromGenes2MLData = function(genes,
                             filter=c("DPI","DSI","ESTcount","constitutiveexons"),
                             ...){
   if(addcontrols){
-    if(which.controls == "ghosh"){
+    if(which.controls == "allghosh"){
       ndgenes = read.csv(paste0(system.file("g2pml/", "", package = "G2PML"),
                                 "Ghoshpaperdiseasenondisease.csv"),stringsAsFactors=F)
       #Keep only those that are non-disease ones, and convert from Ensembl to gene ID

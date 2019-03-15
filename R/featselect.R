@@ -26,6 +26,7 @@ featureSelection = function(genes=NULL,
                             seed=12345,
                             sizes = c(5,10,20),
                             k=5,
+                            controls="allghosh",
                             trnProp=0.9,
                             repeats=10,
                             gacontrols=-1){
@@ -34,7 +35,7 @@ featureSelection = function(genes=NULL,
   allgenes = genes
   cat("We'll work with",length(allgenes),"disease genes\n")
   mldata = fromGenes2MLData(genes=allgenes,
-                            which.controls="allgenome")
+                            which.controls=controls)
   mask = !(colnames(mldata) %in% c("gene","condition"))
 
   mldata[,mask] = scale(mldata[,mask])
