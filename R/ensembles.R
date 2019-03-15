@@ -70,16 +70,19 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
   genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
   genes = na.omit(G2PML::fromSymbol2Hugo(genes))
 
-  if(controls == "allghosh")
+  if(controls == "allghosh"){
     ctrlpath=system.file("g2pml/controlgenes/allghosh/", "", package = "G2PML")
-  else
+    #Getting control genes
+    ctrlfile = paste0(ctrlpath,"/",panel,"_controls.tsv")
+    cat("Reading controls from",ctrlfile,"\n")
+    ctrlgenes = read.delim(ctrlfile,header=F,stringsAsFactors=F)$V1
+    ctrlgenes = na.omit(G2PML::fromSymbol2Hugo(ctrlgenes))
+  }else if(controls == "complement"){
+    coding = getCodingGenome()
+    ctrlgenes = coding[!(coding %in% genes)]
+  }else
     stop(paste0("Control type not found:",controls))
 
-  #Getting control genes
-  ctrlfile = paste0(ctrlpath,"/",panel,"_controls.tsv")
-  cat("Reading controls from",ctrlfile,"\n")
-  ctrlgenes = read.delim(ctrlfile,header=F,stringsAsFactors=F)$V1
-  ctrlgenes = na.omit(G2PML::fromSymbol2Hugo(ctrlgenes))
   cat("We get",length(ctrlgenes),"control genes\n")
 
 
