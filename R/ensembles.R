@@ -1319,10 +1319,11 @@ evalEnsemblesOneShot = function(ensembles,
   }
   for(q in c(0.5,0.6,0.7,0.8,0.9,0.99)){
     diseasegenes = NULL
+    diseasegenesunr = NULL
     hitsperfold = NULL
     allhits = NULL
-
     allevaldisease = NULL
+
     for(i in 1:k){
       cat("Now we generate predictions\n")
 
@@ -1330,11 +1331,17 @@ evalEnsemblesOneShot = function(ensembles,
                             cutoff=q,
                             trees=untilTree,
                             remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"]))
+      milkedunr = milkEnsemble(ensemble = ensembles[[i]],
+                            cutoff=q,
+                            trees=untilTree,
+                            remove=NULL)
 
       hits = getHits(panel=ensembles[[i]]$panel,
                      genes=milked,
                      brandnew=ensembles[[i]]$evaldisease)
+
       allevaldisease = c(allevaldisease,ensembles[[i]]$evaldisease)
+
       hitsperfold = rbind(hitsperfold,c(ensembles[[i]]$panel,
                                         ensembles[[i]]$method,
                                         i,q,untilTree,
@@ -1343,11 +1350,17 @@ evalEnsemblesOneShot = function(ensembles,
                                         hits$hits,
                                         hits$fold))
       diseasegenes = c(diseasegenes, milked)
+      diseasegenesunr = c(diseasegenesunr,milkedunr)
 
     }
     allevaldisease = unique(allevaldisease)
     diseasegenes = table(diseasegenes)
-    mylocalgenes = names(diseasegenes)[diseasegenes/k >= q]
+    diseasegenesunr = table(diseasegenesunr)
+
+    mylocalgenes = names(diseasegenesunr)[diseasegenesunr/k >= q]
+    hits = getHits(panel=ensembles[[i]]$panel,
+                   genes=mylocalgenes,
+                   brandnew=allevaldisease)
 
     #Now the final "all ensemble" predictions
     hitsperfold = rbind(hitsperfold,c(ensembles[[i]]$panel,
@@ -1356,10 +1369,11 @@ evalEnsemblesOneShot = function(ensembles,
                                       q,
                                       untilTree,
                                       length(mylocalgenes),
-                                      length(allevaldisease),
-                                      sum(allevaldisease %in% mylocalgenes),
+                                      hits$newgenes,
+                                      hits$hits,
                                       hits$fold))
 
+    print(hitsperfold)
 
     #diseasegenes = as.numeric(diseasegenes/used)
     diseasegenes = sort(diseasegenes,decreasing=T)
@@ -1426,7 +1440,7 @@ evalEnsemblesOneShot = function(ensembles,
   colnames(globalhitsperfold) = c("panel","method","fold","q","trees","predictions","evalgenes","hits","enrichment")
   allkappas = c(k,mean(kappa),max(kappa),min(kappa))
   names(allkappas) = c("folds","meankappa","maxkappa","minkappa")
-  mask = globalhitsperfold[,"fold"] != as.character(k + 1)
+  mask = globalhitsperfold[,"fold"] == as.character(k + 1)
   iplusoneevals = globalhitsperfold[mask,]
   qfold = iplusoneevals[which.max(as.numeric(iplusoneevals[,"enrichment"])),"q"]
 
