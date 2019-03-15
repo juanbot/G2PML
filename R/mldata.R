@@ -963,7 +963,7 @@ fromGenes2MLData = function(genes,
       ndgenes = read.csv(paste0(system.file("g2pml/", "", package = "G2PML"),
                                 "Ghoshpaperdiseasenondisease.csv"),stringsAsFactors=F)
       #Keep only those that are non-disease ones, and convert from Ensembl to gene ID
-      ndgenes = fromEnsembl2GeneName(ndgenes$gene[ndgenes$type == "non-disease"])
+      ndgenes = fromEnsembl2GeneNameBM(ndgenes$gene[ndgenes$type == "non-disease"])
       #Detect whether some of the control genes are disease too and remove
       mask = ndgenes %in% genes
       ndgenes = ndgenes[!mask]
@@ -1170,6 +1170,36 @@ getCodingGenome = function(){
 
   genes = fromSymbol2Hugo(genes)
   return(na.omit(genes))
+}
+
+fromEnsembl2GeneNameBM = function(genes,use38=T){
+  if(use38){
+    ensembl <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL",
+                       dataset="hsapiens_gene_ensembl")
+    external.gene.att = "external_gene_name"
+  }else{
+    ensembl <- biomaRt::useMart(host="jun2013.archive.ensembl.org",
+                       biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
+    external.gene.att = "external_gene_id"
+  }
+
+  attributes <- c("ensembl_gene_id",external.gene.att)
+  genes.with.name = biomaRt::getBM(attributes=attributes, filters="ensembl_gene_id", values=genes,mart=ensembl)
+  cat("From",length(genes),"Ensembl IDs we got",nrow(genes.with.name),"genes with external gene name\n")
+  thematch = match(genes,genes.with.name$ensembl_gene_id)
+  outgenes = genes.with.name[,2][thematch]
+  if(sum(is.na(thematch)) == 0)
+    return(outgenes)
+  cat("Couldn't conver",sum(is.na(thematch)),"genes\n")
+  outgenes[is.na(thematch)] = genes[is.na(thematch)]
+  return(outgenes)
+
+
+  thematch = match(genes,genes.with.name$external_gene_name)
+  outgenes = genes.with.name[,2][thematch]
+  outgenes[is.na(thematch)] = genes[is.na(thematch)]
+  cat("fromGeneName2EnsemblBM, couldn't convert",sum(is.na(thematch)),"genes\n")
+  return(outgenes)
 }
 
 fromGeneName2EnsemblBM = function(genes,use38=T){

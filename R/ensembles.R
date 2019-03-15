@@ -37,7 +37,7 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                               tuneLength=5,
                               #Number of repeats to be done by Caret
                               nsamps=5,
-                              auto=F,
+                              auto=T,
                               maxTrials=5,
                               controls = "allghosh",
                               fs="own",
@@ -510,8 +510,6 @@ ensembleLearnTournament  = function(genes,
                                     #If we do feature selection, these are the vars we use
                                     fsfile=NULL,
                                     vars=NULL,
-                                    #The control genes to use
-                                    controls="ghosh",
                                     #We don't want these predictors to be used for learning
                                     filter=c("DSI","DPI","ESTcount","constitutiveexons"),
                                     seed=12345,
@@ -543,7 +541,6 @@ ensembleLearnTournament  = function(genes,
   cat("Proportion between disease and non disease\n")
   print(table(condition))
   cat("Method list:",paste0(methods,collapse=","),"\n")
-  cat("Controls:",controls,"\n")
   cat("expID:",expID,"\n")
 
   methods = unlist(lapply(methods,
