@@ -77,7 +77,7 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
     cat("Reading controls from",ctrlfile,"\n")
     ctrlgenes = read.delim(ctrlfile,header=F,stringsAsFactors=F)$V1
     ctrlgenes = na.omit(G2PML::fromSymbol2Hugo(ctrlgenes))
-  }else if(controls == "complement"){
+  }else if(controls == "allgenome"){
     coding = getCodingGenome()
     ctrlgenes = coding[!(coding %in% genes)]
   }else
