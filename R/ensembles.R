@@ -507,6 +507,8 @@ ensembleLearnTournament  = function(genes,
                                               "rf",
                                               "sparseLDA",
                                               "kknn"),
+                                    #The control genes to use
+                                    controls="allghosh",
                                     #If we do feature selection, these are the vars we use
                                     fsfile=NULL,
                                     vars=NULL,
