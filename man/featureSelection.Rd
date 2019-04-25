@@ -2,15 +2,52 @@
 % Please edit documentation in R/featselect.R
 \name{featureSelection}
 \alias{featureSelection}
-\title{Title}
+\title{Which features are most important for your gene list?}
 \usage{
-featureSelection(genes = NULL, seed = 12345, useSMOTE = F,
-  sizes = c(5, 10, 20), k = 5, trnProp = 0.9, repeats = 10,
+featureSelection(genes = NULL, seed = 12345, sizes = c(5, 10, 20),
+  k = 5, controls = "allghosh", trnProp = 0.9, repeats = 10,
   gacontrols = -1)
 }
 \arguments{
+\item{genes}{chr vector. Gene symbols - can be returned from
+\code{\link{getGenesFromPanelApp}}.}
+
+\item{seed}{num scalar. Random seed for reproducibility.}
+
+\item{sizes}{int vector. Sizes to be used in the recursive feature
+elimination \code{\link{caret::rfe}}.}
+
+\item{k}{int scalar. Factor by which to split training set for k-fold cross
+validation.}
+
+\item{trnProp}{num scalar. Between 0-1 - proportion of disease genes to keep
+when bootstrapping.}
+
+\item{repeats}{int scalar. Number of times you want to bootstrap/iterate. For
+each iteration, \code{featureSelection} will compute rfe on an random
+proportion (trnProp) of disease genes and a random size-matched set of
+controls.}
+
 \item{gacontrols}{}
 }
+\value{
+list of length repeats. Each element contains an rfe class object
+  fitted for a set of randomly sampled disease and control genes.
+}
 \description{
-Title
+\code{featureSelection} computes the best features that discriminate between
+your list of disease genes and control genes. Uses bootstrapping to form
+balanced sets of disease and non-disease genes then selects the best
+features based on a random forest algorithm implemented through the
+\code{\link{caret::rfe}} function.
+}
+\examples{
+genes <- getGenesFromPanelApp(disorder="Neurology and neurodevelopmental disorders",
+  panel="Parkinson Disease and Complex Parkinsonism", color = "green")
+featureSelection(genes, controls = "allgenome")
+
+}
+\seealso{
+For more details on rfe:
+  \url{http://topepo.github.io/caret/recursive-feature-elimination.html}
 }

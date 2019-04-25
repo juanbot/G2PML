@@ -2,13 +2,25 @@
 % Please edit documentation in R/featselect.R
 \name{getVarsFromFS}
 \alias{getVarsFromFS}
-\title{Title}
+\title{Which features are most important for your gene list?}
 \usage{
-getVarsFromFS(fsdata, r = 0.6)
+getVarsFromFS(fsdata, r = 0.6, counts = F)
 }
 \arguments{
-\item{r}{}
+\item{fsdata}{rfe object. Output of \code{\link{featureSelection}}.}
+
+\item{r}{num scalar. Between 0-1. Minimum proportion of bootstraps that must
+have selected that feature as important.}
+
+\item{counts}{lgl scalar. If TRUE, will return counts each "important"
+feature appeared amongst bootstrap iterations. If FALSE, the names of the
+features in the same order.}
+}
+\value{
+Either counts or names of the most important features determined by
+  rfe.
 }
 \description{
-Title
+\code{getVarsFromFS} converts the output of \code{\link{featureSelection}}
+function to a list of features that were most important across bootstrapping
 }
