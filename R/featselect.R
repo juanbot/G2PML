@@ -7,21 +7,41 @@
 #"cd /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/; Rscript -e \"library(caret);library(G2PML);panel=\\\"$i\\\";saveRDS(ensembleLearnKFold(panel=\\\"$i\\\",fs=featureSelection(genes=getGelGenes(panel=panel),k=3,repeats=20),nboot=20,auto=T,k=5,maxTrials=5),\\\"$i.Apr2018.rds\\\")\"" |  qsub -S /bin/bash -N $i -l h_rt=72:0:0 -l tmem=8G,h_vmem=8G
 #-o /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.apr.o -e /SAN/neuroscience/WT_BRAINEAC/ml/tournamentnewDB/$i.apr.e ; done
 
-#' Title
+#' Which features are most important for your gene list?
 #'
-#' @param genes
-#' @param seed
+#' \code{featureSelection} computes the best features that discriminate between
+#' your list of disease genes and control genes. Uses bootstrapping to form
+#' balanced sets of disease and non-disease genes then selects the best
+#' features based on a random forest algorithm implemented through the
+#' \code{\link{caret::rfe}} function.
+#'
+#' @param genes chr vector. Gene symbols - can be returned from
+#'   \code{\link{getGenesFromPanelApp}}.
+#' @param seed num scalar. Random seed for reproducibility.
 #' @param useSMOTE
-#' @param sizes
-#' @param k
-#' @param trnProp
-#' @param repeats
+#' @param sizes int vector. Sizes to be used in the recursive feature
+#'   elimination \code{\link{caret::rfe}}.
+#' @param k int scalar. Factor by which to split training set for k-fold cross
+#'   validation.
+#' @param trnProp num scalar. Between 0-1 - proportion of disease genes to keep
+#'   when bootstrapping.
+#' @param repeats int scalar. Number of times you want to bootstrap/iterate. For
+#'   each iteration, \code{featureSelection} will compute rfe on an random
+#'   proportion (trnProp) of disease genes and a random size-matched set of
+#'   controls.
 #' @param gacontrols
 #'
-#' @return
+#' @return list of length repeats. Each element contains an rfe class object
+#'   fitted for a set of randomly sampled disease and control genes.
 #' @export
 #'
 #' @examples
+#' genes <- getGenesFromPanelApp(disorder="Neurology and neurodevelopmental disorders",
+#'   panel="Parkinson Disease and Complex Parkinsonism", color = "green")
+#' featureSelection(genes, controls = "allgenome")
+#'
+#' @seealso For more details on rfe:
+#'   \url{http://topepo.github.io/caret/recursive-feature-elimination.html}
 featureSelection = function(genes=NULL,
                             seed=12345,
                             sizes = c(5,10,20),
@@ -45,12 +65,12 @@ featureSelection = function(genes=NULL,
 
   for(run in 1:repeats){
 
-      the_n = floor(length(genes)*trnProp)
-      lmldata = mldata[c(sample(which(mldata$condition == "Disease"),the_n),
-                         sample(which(mldata$condition == "Nondisease"),the_n)),]
-      condition = lmldata$condition
-      lmldata$gene = NULL
-      lmldata$condition = NULL
+    the_n = floor(length(genes)*trnProp)
+    lmldata = mldata[c(sample(which(mldata$condition == "Disease"),the_n),
+                       sample(which(mldata$condition == "Nondisease"),the_n)),]
+    condition = lmldata$condition
+    lmldata$gene = NULL
+    lmldata$condition = NULL
 
 
 
