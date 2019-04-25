@@ -151,8 +151,19 @@ pdmodel = readRDS("~/Dropbox/KCL/workspace/G2PML/inst/g2pml/Parkinson_Disease_an
 names(pdmodel$eval)
 ```
 
-And now we study the most relevant fields.
+And now we study the most relevant fields. If we want to get the most reliable gene predictions, we do
 
+```{r}
+print(pdmodel$eval$finalpreds)
+```
+
+and we get 311 genes that, given the omics features of our gene panel, should be associated to monogenic forms of PD when data arrives for that. The Kappa statistic for the ensemble on the test data are 
+
+```{r}
+pdmodel$eval$kappa
+```
+
+Which are pretty decent, given that Kappa values are in $[-1,1]$ and values over 0.5 are reasonably good. 
 
 
 
