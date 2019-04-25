@@ -18,6 +18,6 @@ With G2PML and your panel P={g1,g2,...,gn} of choice, where gi is the i-th gene,
 
 This is the 1st tutorial you can follow to get familiar with the data and 1st analyses on important features in your panel. Download to see it locally
 
-* [1st tutorial on G2PML](http://github.com/juanbot/G2PML/inst/g2pml/BasicUsage.html)
+* [1st tutorial on G2PML](https://github.com/juanbot/G2PML/blob/master/inst/g2pml/BasicUsage.pdf)
 
 
