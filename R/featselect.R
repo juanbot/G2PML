@@ -105,15 +105,24 @@ featureSelection = function(genes=NULL,
 
 }
 
-#' Title
+#' Which features are most important for your gene list?
 #'
-#' @param fsdata
-#' @param r
+#' \code{getVarsFromFS} converts the output of \code{\link{featureSelection}}
+#' function to a list of features that were most important across bootstrapping
 #'
-#' @return
+#' @param fsdata rfe object. Output of \code{\link{featureSelection}}.
+#' @param r num scalar. Between 0-1. Minimum proportion of bootstraps that must
+#'   have selected that feature as important.
+#' @param counts lgl scalar. If TRUE, will return counts each "important"
+#'   feature appeared amongst bootstrap iterations. If FALSE, the names of the
+#'   features in the same order.
+#'
+#' @return Either counts or names of the most important features determined by
+#'   rfe.
 #' @export
 #'
-#' @examples
+#' @example
+#' getVarsFromFS(allfsdata, r = 0.6, counts = F)
 getVarsFromFS = function(fsdata,r=0.6,counts=F){
   availfiles = 0
   vars = NULL
@@ -136,8 +145,27 @@ getVarsFromFS = function(fsdata,r=0.6,counts=F){
   return(unique(names(fcounts)))
 }
 
-
-
+#'Which direction and to what extent do your important features affect the
+#'gene's likelihood of being disease causing?
+#'
+#'\code{getVarsFromFS} extracts from the output of
+#'\code{\link{featureSelection}} the most important features based a voting
+#'system across bootstraps. Then for the most-voted features obtain the sign and
+#'effect sizes of each feature.
+#'
+#'@inheritParams getVarsFromFS
+#'
+#'@param allfsdata list of rfe objects. Output of \code{\link{featureSelection}}.
+#'@param panel chr scalar. The GE panel name from which input genes were
+#'  extracted.
+#'
+#'@return list with all counts, signs, effect sizes and mean effect sizes of all
+#'  important features across all bootstraps
+#'
+#'@export
+#'
+#'@examples
+#'getVarsMetaDataFromFS(allfsdata, r = 0.6, panel = "Unknown")
 getVarsMetaDataFromFS = function(allfsdata,r=r,panel="Unknown"){
 
   allfeatures = NULL
