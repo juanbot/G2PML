@@ -1,0 +1,160 @@
+---
+title: 'G2PML: tutorial on basic usage of the tool'
+author: "Juan A. Botía"
+date: "25/04/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Introduction 
+
+G2PML is set of datasets and software to study monogenic diseases. We study the diseases through the genes already discovered to be associated to the disease in the Mendelian way (i.e. one mutation, one case). These genes form what is known as a panel of genes. 
+
+Our approach to the disease is by describing genes in terms of (a) genetic constraint related properties, (b) genomic related properties and (c) transcriptomics.
+
+With G2PML and your panel P={g1,g2,...,gn} of choice, where gi is the i-th gene, you can
+
+* Perform an analysis on which features are relevant to distinguish those genes from the rest
+
+* Create prediction models to predict new genes from the set of P genes and annotate and score the predictions.
+
+* Enlarge your DDBB of properties to incorporate new ones to enrich your analysis
+
+In our studies, we have been using the PanelApp database of gene panels, from Genomics England, accesible at <http://panelapp.genomicsengland.co.uk>. In the package we incorporta functions to navigate the panels and access the genes. For example, in 
+
+```{r, cache=T}
+library(G2PML)
+panels = getPanelsFromPanelApp()
+names(panels)
+dim(panels)
+panels$Name[1:10]
+```
+
+We can access 173 gene panels and their genes. For example, we can get the genes for monogenic forms of PD as follows
+
+```{r, cache=T}
+genes = getGenesFromPanelApp (disorder="Neurology and neurodevelopmental disorders",
+                     panel="Parkinson Disease and Complex Parkinsonism",
+                     color="green")
+genes
+```
+
+We'll take those genes as an example on how to use GP2ML to study the phenotype.
+
+# Relevant features on your gene panel
+
+At this point, we have ready our gene list to study. And we want to know what makes it different this list of genes from the rest of genes in the genome (note we only consider for now protein coding genes as many of the features we use to desdribe them just only make sense for that gene biotype). 
+
+
+Note that we have many different properties to describe our genes. To quickly get a hint on how these genes are described, we can do 
+
+```{r, cache=T}
+genedata = G2PML::fromGenes2MLData(genes=genes,which.controls="allgenome")
+dim(genedata)
+```
+
+By simply doing that, we have created an annotation dataset for our genes (and also for the rest of genes in the genome), i.e. 17635 genes including the PD ones, with 161 features of interest. A quick look at the features we use ...
+
+```{r}
+str(genedata[,1:30])
+```
+
+
+And we see we have the gene name, and many other features of interest that we describe elsewhere.
+But basically, between `GeneLength` and `GCcontent` we have genomic properties, `String` gives an indication on how active (or sticky) is the gene product (i.e. the protein). Then we have from `LoFTool` to `gnomadOEMiss` attributes that try to describe how resistant or fragile the gene is to mutation. The rest of properties are related with the expression and co-expression in GTEx 47 tissues.
+
+Finally, we have 
+
+```{r}
+table(genedata$condition)
+```
+
+that helps us distinguish between our genes and the rest. 
+
+Now that we have this, we can perform an analysis on what are the most relevant features to distinguish, from a machine learning perspective, between your genes and the rest. For that we can perform a Caret based feature selection analysis. But we have to take into account that highly inbalance in the dataset, i.e. in the case of PD genes, we have 517 non panel genes for each of the genes in the panel. Also note that we expect that some of those genes not in the panel should also be there. And that is precissely what we aim for: to discover such genes. 
+
+We can perform a feature selection analysis simply doing this (it will take a while):
+
+```{r,eval=F}
+fspd = featureSelection(genes=genes,k=10,repeats=40,controls="allgenome",trnProp=0.9)
+```
+
+By using Caret and recursive feature subset eliminination strategy <http://topepo.github.io/caret/recursive-feature-elimination.html> averaged many times on perfectly balanced subproblems (i.e. 50% PD genes, 50% rest of protein coding genes) we will get a result set. It is important to describe the algorithm so we can appropriately understand results
+
+* Step 1. Repeat the following steps for `repeats` times
+    - Let `ctrl` be the control object resulting from a call to `caret::rfeControl` with random forest algorithms for feature selection, evaluating with cross-validation and using `k` folds
+    - Create a training dataset `trn` using as positive examples `trnProp` proportion of the panel genes, and as negative examples, exactly the same number of genes randomly samples from the control genes
+    - Call `caret::rfe` with the training data and `ctrl` and obtain the optimum variables for that experiment
+    - Obtain the importance and sign of each variable as its coefficient in the regression model 
+* Step 2. Return a list of the result objects from each step in the loop
+
+
+Let us suppose we have it saved and we load it now
+
+```{r}
+fspd = readRDS("~/Dropbox/KCL/workspace/G2PML/inst/g2pml/Parkinson_Disease_and_Complex_Parkinsonism.fs.rds")
+metadata = G2PML::getVarsMetaDataFromFS(fspd,r=0.4)
+eff = order(as.numeric(metadata$meaneffects[,"meaneffect"]))
+metadata$meaneffects[,"meaneffect"][eff]
+```
+
+And from left to right we see the attributes that genes in the panel are enriched for higher values (left) and attributes (right) for which genes in the panel show lower varlues. Only those that show some statistical relevance are shown. We see that in terms of tissue and expression, Frontal cortex, adrenal gland, substantia nigra and scheletal muscle are relevant tissues. We also see that these genes lead to proteins with high interaction coefficients as found in String database, etc.
+
+The $r$ parameter is very important. It is the minimum proportion of times that a feature appeared selected as most relevant by Caret, out of the total number of iterations in the `repeat` variable. For example, in this case we repeated the same experiment 40 times, and we are asking to select all variables which appear more than 40% of those 40 times. 
+
+
+From that very same data, we can get a descriptive plot as follows
+
+```{r}
+G2PML::featureSelectionPlot(fspd,r=0.4)
+```
+
+that shows how the gene panel is enriched for green feature values (higher values of x axes indicate more importance). For example, these genes are particularly expressed in Frontal Cortex and the Substantia Nigra. But they are also particularly abundant for PPI entries in the String database. It is the other way around for the red features. Note that the plot somewaht reflects  the number of times the variable was selected by Caret as relevant out of the number of repeats through the blob's radius. Expression in Frontal Cortex is not only on of the features with strongest effect but also one of the most frequent within iterations. The same goes, on the opposite sense, for expression in testis and the number of transcripts at the genes. 
+
+# Learning a model
+
+The basic generation of an hypothesis from data in our system is based on Caret. However, we use Caret as a means to wrap any potentially useful learning algorithm in a common way. The basic hypothesis we create is from a perfectly balanced dataset, i.e. 50% genes from our panel, 50% genes from the rest of the genome. In consequence, to face a highly inbalanced problem, we have to convert that problem into many smaller and balanced problems, generate hypotheses for them and integrate all into an ensemble. Now, given one of those smaller learning problems, in order to get the best hypothesis, we employ a __tournament__ based approach. This means that we use a pool of classification algorithms available in Caret (e.g. CART, C5.0, SVMs, random forest, LDA, knn) with the dataset, and keep the algorithm with the best test kappa. In order to compound an ensemble, we do this for each small learning problem. The hypotheses constructed in this way are integrated into the ensemble. Moreover, given that the genes in our panel are usually small, we have to repeat this process in different training/test folds to fight overfitting. In essence, the process would be the following, as coded in the `G2PML::ensembleLearnKFold()` function. 
+
+* Step 0. Let `nboot` be the max number of hypothesis that will form the final ensemble. Let `maxTrials` be the number of unsuccessful attempts of improving the overal Kappa statistic on the current ensemble. Let 
+
+* Step 1. For fold in 1..k do
+
+    - Let $E\leftarrow\emptyset$ be the empty ensemble. Let $D=\{(x_i,y_i)\}$ be the learning data using as positive examples our panel genes and as negatives the rest of the genome
+    
+    - While $|E| < nboot$ and $i < maxTrials$
+    
+        + create $d$ training data with 50% positive and 50% negative examples from $D$
+        
+        + For each algorithm in our pool of algorithms get the best hypothesis $h^*$ amongst all. Add $h^*$ to $E$ if it improves evaluation error. If not, increment $maxTrials$
+        
+    - End while
+    
+* End For
+
+Let us suppose we want to develop a model for the PD genes. We incorporate the results of the feature selection through `fspd`, we will use the default algorithms in the tournament (CART, C5.0, SVMs, random forest, LDA, knn), the number of basic models in the ensemble will be as much as 20, the number of folds in the cross-validation of the ensemble, $k=5$ and the number of max trials without success before we stop growing the ensemble is also $5$. As in the feature selection process, we use as controls the rest of the genome.
+
+```{r,eval=F}
+mypanel="Parkinson_Disease_and_Complex_Parkinsonism"
+mymodel = ensembleLearnKFold(panel=mypanel,genes=genes,fs=fspd,nboot=20,
+                             auto=T,k=5,maxTrials=5,controls="allgenome")
+```
+
+And we get
+
+```{r}
+pdmodel = readRDS("~/Dropbox/KCL/workspace/G2PML/inst/g2pml/Parkinson_Disease_and_Complex_Parkinsonism.Apr2018.rds")
+names(pdmodel$eval)
+```
+
+And now we study the most relevant fields.
+
+
+
+
+
+
