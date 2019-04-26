@@ -194,6 +194,8 @@ Amelie is a TGTBT (Too Good To Be True) kind of tool. Have a read at <https://am
 What Amelie does is an association for each gene of a list of papers about mendelian diseases, related to the phenotype and the gene. Each gene-paper association comes with a score from 0 to 100. Highest values show highest confidence of the Mendelian association of the gene to the phenotype within the paper. Amelie will return the papers in the form of PUBMED ids. G2PML offers facilites to use Amelie through its Web API and it is as simple as follows if we continue with the example of PD and the ensemble we got already.
 
 ```{r,cache=T}
+library(RCurl)
+library(RJSONIO)
 pdamelie = annotateWithAmelie(ensemble=pdmodel)
 cat("We got annotations for",
     100*length(unique(pdamelie$gene[!is.na(pdamelie$confidence)]))/length(pdmodel$eval$finalpreds),
@@ -205,15 +207,26 @@ hist(as.numeric(pdamelie$confidence),main="Amelie scores for PD predictions",xla
 
 And if we focus on genes with score 100, we get papers like (only the 1st 10 shown)
 
-```{r}
+```{r,cache=T}
 mask = pdamelie$confidence == 100
 pdamelie[mask,c("gene","title","journal")][1:10,]
 ```
 
 This tool can be very useful if we want a starting point from where to start looking for papers that back up our predictions.
 
+## Enrichment of functional terms
 
+And of course we can annotate our gene predictions with tools as the gProfileR R package as follows
 
+```{r,cache=T}
+enrpd = gProfileR::gprofiler(query=pdmodel$eval$finalpreds,src_filter=c("GO","KEGG","REAC","HP","HPA","OMIM"))
+```
+
+So we can get a hint of what we find with wordcloud
+
+```{r,cache=T}
+wordcloud::wordcloud(enrpd$term.name,random.order=F,min.freq=1)
+```
 
 
 

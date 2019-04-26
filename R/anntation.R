@@ -185,7 +185,7 @@ annotateWithAmelie = function(ensemble,
         partial = results[[i]][[2]]
         if(length(partial) >0){
           partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
-          print(partial)
+          #print(partial)
           allresults = rbind(allresults,cbind(rep(panel,nrow(partial)),
                                               rep(gene,nrow(partial)),
                                               rep(phenotype,nrow(partial)),
@@ -193,7 +193,7 @@ annotateWithAmelie = function(ensemble,
         }
 
         else{
-          cat("Nothing for",gene,"\n")
+          #cat("Nothing for",gene,"\n")
           allresults = rbind(allresults,c(panel,gene,phenotype,NA,NA))
         }
       }
@@ -213,7 +213,7 @@ annotateWithAmelie = function(ensemble,
   journals = NULL
   result = NULL
   for(index in indexes){
-    cat("From",index,"\n")
+    #cat("From",index,"\n")
     ids = paste0(allids[lastindex:index],collapse=",")
     result = c(result,fromJSON(postForm("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",db="pubmed",id=ids,retmode="json"))$result)
     setupids = allids[lastindex:index]
