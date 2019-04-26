@@ -104,7 +104,7 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
   stopifnot(!is.null(controlgenes))
 
   ncontrols = length(controlgenes)
-  diseasegenes = unique(unlist(lapply(ens,function(x){return(x$genes[!(x$genes %in% x$controlgenes)])})))
+  diseasegenes = unique(unlist(lapply(ensemble,function(x){return(x$genes[!(x$genes %in% x$controlgenes)])})))
   alldata = fromGenes2MLData(genes=diseasegenes,
                                      which.controls="allgenome")
 
