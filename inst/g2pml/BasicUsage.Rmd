@@ -193,10 +193,26 @@ Amelie is a TGTBT (Too Good To Be True) kind of tool. Have a read at <https://am
 
 What Amelie does is an association for each gene of a list of papers about mendelian diseases, related to the phenotype and the gene. Each gene-paper association comes with a score from 0 to 100. Highest values show highest confidence of the Mendelian association of the gene to the phenotype within the paper. Amelie will return the papers in the form of PUBMED ids. G2PML offers facilites to use Amelie through its Web API and it is as simple as follows if we continue with the example of PD and the ensemble we got already.
 
-```{r}
+```{r,cache=T}
 pdamelie = annotateWithAmelie(ensemble=pdmodel)
-dim(pdamelie)
+cat("We got annotations for",
+    100*length(unique(pdamelie$gene[!is.na(pdamelie$confidence)]))/length(pdmodel$eval$finalpreds),
+    "% of the genes")
+pdamelie = na.omit(pdamelie)
+hist(as.numeric(pdamelie$confidence),main="Amelie scores for PD predictions",xlab="Scores from 0 to 100",col=rgb(0,0,1,1/4))
+
 ```
+
+And if we focus on genes with score 100, we get papers like (only the 1st 10 shown)
+
+```{r}
+mask = pdamelie$confidence == 100
+pdamelie[mask,c("gene","title","journal")][1:10,]
+```
+
+This tool can be very useful if we want a starting point from where to start looking for papers that back up our predictions.
+
+
 
 
 
