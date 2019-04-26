@@ -106,7 +106,7 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
   ncontrols = length(controlgenes)
   diseasegenes = unique(unlist(lapply(ensemble,function(x){return(x$genes[!(x$genes %in% x$controlgenes)])})))
   alldata = fromGenes2MLData(genes=diseasegenes,
-                                     which.controls="allgenome")
+                             which.controls="allgenome")
 
   dataforpca = alldata[,vars]
   dataforpca = prcomp(dataforpca,scale=T,retx=T)
@@ -159,4 +159,75 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
          title="Gene types",
          col=c("blue","orange","red"),
          legend=c("genome","disease","predictions"),cex=0.6)
+}
+
+
+annotateWithAmelie = function(ensemble,
+                              genepath="datasets/geOctober2018/",
+                              phenotype="HP:0001300",
+                              only.journals=T){
+  panel = ensemble[[1]]$panel
+  genes = ensemble$eval$finalpreds
+  allresults = NULL
+  cat("Working with",panel,"\n")
+  cat("Working with",phenotype,"\n")
+
+  if(length(genes) > 10){
+    cat("Calling Amelie now\n")
+    results = fromJSON(postForm('https://amelie.stanford.edu/api/',verify=F,
+                                genes=paste0(genes,collapse=","),
+                                phenotypes=phenotype))
+    cat("Done!\n")
+
+    if(length(results)){
+      for(i in 1:length(results)){
+        gene = unlist(results[[i]][[1]])
+        partial = results[[i]][[2]]
+        if(length(partial)>0)
+          allresults = rbind(allresults,cbind(rep(panel,nrow(partial)),
+                                              rep(gene,nrow(partial)),
+                                              rep(phenotype,nrow(partial)),
+                                              partial))
+        else{
+          cat("Nothing for",gene,"\n")
+          allresults = rbind(allresults,c(panel,gene,phenotype,NA,NA,NA))
+        }
+      }
+    }
+    break
+  }
+
+  #Now we get the title and journal
+  by=200
+  n = length(unique(na.omit(allresults[,5])))
+  indexes = seq(by,n,by)
+  if(!(n %in% indexes))
+    indexes = c(indexes,n)
+  lastindex = 1
+  titles = NULL
+  jnames = NULL
+  allids = unique(na.omit(allresults[,5]))
+  journals = NULL
+  result = NULL
+  for(index in indexes){
+    cat("From",index,"\n")
+    ids = paste0(allids[lastindex:index],collapse=",")
+    result = c(result,fromJSON(postForm("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",db="pubmed",id=ids,retmode="json"))$result)
+    setupids = allids[lastindex:index]
+    lastindex = index
+  }
+  for(i in 1:nrow(allresults)){
+    if(!is.na(allresults[i,5])){
+      titles = c(titles,result[[as.character(allresults[i,5])]]$title)
+      jnames = c(jnames,result[[as.character(allresults[i,5])]]$fulljournalname)
+    }else{
+      titles = c(titles,"not applicable")
+      jnames = c(jnames,"not applicable")
+
+    }
+  }
+
+  allresults = cbind(allresults,titles,jnames)
+  colnames(allresults) = c("panel","gene","confidence","phenotype","pubmedid","title","journal")
+  return(allresults)
 }
