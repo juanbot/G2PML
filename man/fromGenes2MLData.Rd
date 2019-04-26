@@ -2,15 +2,41 @@
 % Please edit documentation in R/mldata.R
 \name{fromGenes2MLData}
 \alias{fromGenes2MLData}
-\title{Title}
+\title{Obtaining ML features for your genes of interest}
 \usage{
-fromGenes2MLData(genes, addcontrols = T, which.controls = "ghosh",
+fromGenes2MLData(genes, addcontrols = T, which.controls = "allghosh",
   condition = NULL, vars = NULL, filter = c("DPI", "DSI", "ESTcount",
   "constitutiveexons"), ...)
 }
 \arguments{
-\item{...}{}
+\item{genes}{chr vector. Gene symbols of your disease genes - can be returned
+from \code{\link{getGenesFromPanelApp}}.}
+
+\item{addcontrols}{lgl scalar. Do you want to add a set of control genes?}
+
+\item{which.controls}{chr scalar. One of "allghosh", "allgenome",
+"clustering", "gauss", "gausskfold" specifying the set of control genes you
+would like to use.}
+
+\item{condition}{chr vector. Vector of length genes describing which are
+"Disease" and "Nondisease".}
+
+\item{vars}{chr vector. Names of features you would like to include.}
+
+\item{filter}{chr vector. Names of features you would like to exclude.}
+
+\item{...}{additional arguments for clustering, only used when which.controls
+is "clustering".}
+}
+\value{
+df with features of input genes formatted for ML.
 }
 \description{
-Title
+\code{fromGenes2MLData} obtains the genetic properties (transcriptomic,
+coexpression, genetic constraint.. etc) for a given set of gene symbols
+}
+\examples{
+genes = getGenesFromPanelApp(disorder="Neurology and neurodevelopmental disorders",
+  panel="Parkinson Disease and Complex Parkinsonism", color = "green")
+genedata = fromGenes2MLData(genes=genes, which.controls="allgenome")
 }
