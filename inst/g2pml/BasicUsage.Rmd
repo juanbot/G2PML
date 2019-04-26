@@ -3,8 +3,8 @@ title: 'G2PML: tutorial on basic usage of the tool'
 author: "Juan A. Botía"
 date: "25/04/2019"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -136,7 +136,7 @@ The basic generation of an hypothesis from data in our system is based on Caret.
     
 * End For
 
-Let us suppose we want to develop a model for the PD genes. We incorporate the results of the feature selection through `fspd`, we will use the default algorithms in the tournament (CART, C5.0, SVMs, random forest, LDA, knn), the number of basic models in the ensemble will be as much as 20, the number of folds in the cross-validation of the ensemble, $k=5$ and the number of max trials without success before we stop growing the ensemble is also $5$. As in the feature selection process, we use as controls the rest of the genome.
+Let us suppose we want to develop a model for the PD genes. We incorporate the results of the feature selection through `fspd`, we will use the default algorithms in the tournament (CART, C5.0, SVMs, random forest, LDA, knn), the number of basic models in the ensemble will be as much as 20, the number of folds in the cross-validation of the ensemble, $k=5$ and the number of max trials without success before we stop growing the ensemble is also $5$ (note that a trial implies trying all the algorithms and all must fail improving the ensemble). As in the feature selection process, we use as controls the rest of the genome.
 
 ```{r,eval=F}
 mypanel="Parkinson_Disease_and_Complex_Parkinsonism"
@@ -165,6 +165,19 @@ pdmodel$eval$kappa
 
 Which are pretty decent, given that Kappa values are in $[-1,1]$ and values over 0.5 are reasonably good. 
 
+Ways of visualizing results including a PCA like plot can be used. For example, we can see how genome, disease genes and predictions, arrange in a 1st 2 PCA axes-like plot as follows
+
+```{r, cache=T}
+pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = F)
+```
+
+But as a cautionary tale, separation between genome and disease genes will be subtle. We can look for PCAs that potentially correlate with disease status as follows
+
+```{r, cache=T}
+pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = T)
+```
+
+And the separation will be somewhat better.
 
 
 

@@ -98,8 +98,8 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
   panel = ensemble[[1]]$panel
   controlgenes = NULL
 
-  if(ctrltype == "ghosh"){
-    controlgenes = ens[[1]]$controlgenes
+  if(ctrltype == "allghosh" || ctrltype == "allgenome"){
+    controlgenes = ensemble[[1]]$controlgenes
   }
   stopifnot(!is.null(controlgenes))
 
@@ -119,9 +119,9 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
   for(i in 1:naxes)
     allpcadata[,i] = as.numeric(allpcadata[,i])
   alldata = allpcadata
-  cols = rep("blue",nrow(alldata))
-  cols[alldata$gene %in% setdiff(getCodingGenome(),controlgenes)] = "pink"
-  cols[alldata$gene %in% diseasegenes] = "red"
+  cols = rep("lightgrey",nrow(alldata))
+  cols[alldata$gene %in% diseasegenes] = "orange"
+  cols[alldata$gene %in% ensemble$eval$finalpreds] = "red"
   theorder = order(cols)
   allpcadata = allpcadata[theorder,]
 
@@ -154,9 +154,9 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
   plot(allpcadata[,axis1],allpcadata[,axis2],col=cols[theorder],cex=0.5,type="p",
        xlab=xlab,
        ylab=ylab,
-       main=paste0(title," : ",sum(cols=="blue")," ",sum(cols=="red")))
-  legend("bottomright",fill=c("blue","red","pink"),
+       main=paste0(title," : ",sum(cols=="red")," ",sum(cols=="orange")))
+  legend("bottomright",fill=c("blue","orange","red"),
          title="Gene types",
-         col=c("blue","red","pink"),
-         legend=c("control","disease","potential disease"),cex=0.6)
+         col=c("blue","orange","red"),
+         legend=c("genome","disease","predictions"),cex=0.6)
 }
