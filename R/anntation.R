@@ -172,30 +172,33 @@ annotateWithAmelie = function(ensemble,
   cat("Working with",panel,"\n")
   cat("Working with",phenotype,"\n")
 
-  if(length(genes) > 10){
     cat("Calling Amelie now\n")
     results = fromJSON(postForm('https://amelie.stanford.edu/api/',verify=F,
                                 genes=paste0(genes,collapse=","),
                                 phenotypes=phenotype))
+    #results = readRDS("~/tmp/results.rds")
     cat("Done!\n")
 
     if(length(results)){
       for(i in 1:length(results)){
         gene = unlist(results[[i]][[1]])
         partial = results[[i]][[2]]
-        if(length(partial)>0)
+        if(length(partial) >0){
+          partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
+          print(partial)
           allresults = rbind(allresults,cbind(rep(panel,nrow(partial)),
                                               rep(gene,nrow(partial)),
                                               rep(phenotype,nrow(partial)),
                                               partial))
+        }
+
         else{
           cat("Nothing for",gene,"\n")
-          allresults = rbind(allresults,c(panel,gene,phenotype,NA,NA,NA))
+          allresults = rbind(allresults,c(panel,gene,phenotype,NA,NA))
         }
       }
     }
-    break
-  }
+
 
   #Now we get the title and journal
   by=200
@@ -228,6 +231,6 @@ annotateWithAmelie = function(ensemble,
   }
 
   allresults = cbind(allresults,titles,jnames)
-  colnames(allresults) = c("panel","gene","confidence","phenotype","pubmedid","title","journal")
-  return(allresults)
+  colnames(allresults) = c("panel","gene","phenotype","confidence","pubmedid","title","journal")
+  return(as.data.frame(allresults,stringsAsFactors=F))
 }

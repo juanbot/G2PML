@@ -165,19 +165,39 @@ pdmodel$eval$kappa
 
 Which are pretty decent, given that Kappa values are in $[-1,1]$ and values over 0.5 are reasonably good. 
 
+# Annotating predictions
+
+Predictions of this nature are  difficult to assess computationally. It is true that we have estimates of the generalization power of the ML prediction models. However, we must note that for small gene panels with few genes, generalization capacity estimates (or error estimates) are difficult to obtain in a reasonable confidence interval. These estimates don't offer a way of ranking the predictions as a first step before deciding which genes should be taken to the lab for experimental validation.
+
+In this section we introduce some approaches incorporated into the G2PML package to work on that direction. 
+
+## PCA plots
+
 Ways of visualizing results including a PCA like plot can be used. For example, we can see how genome, disease genes and predictions, arrange in a 1st 2 PCA axes-like plot as follows
 
 ```{r, cache=T}
-pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = F)
+G2PML::pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = F)
 ```
 
 But as a cautionary tale, separation between genome and disease genes will be subtle. We can look for PCAs that potentially correlate with disease status as follows
 
 ```{r, cache=T}
-pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = T)
+G2PML::pcaPlot(fsdata=fspd,r=0.4,ensemble=pdmodel,bestPCAs = T)
 ```
 
-And the separation will be somewhat better.
+And the separation will be somewhat better. In this example we see we are predicting 311 new disease genes and we used 30 as disease genes from the initial panel. 
+
+## Automated literature search 
+
+Amelie is a TGTBT (Too Good To Be True) kind of tool. Have a read at <https://amelie.stanford.edu/>. The tool needs a list of genes and a list of phenotype terms from the HPO (Human Phenotype Ontology) database that it associates to the whole set of genes. You can select the phenotype term from here  <http://compbio.charite.de/hpoweb/showterm?id=HP:0000118#id=HP_0000118>.  
+
+What Amelie does is an association for each gene of a list of papers about mendelian diseases, related to the phenotype and the gene. Each gene-paper association comes with a score from 0 to 100. Highest values show highest confidence of the Mendelian association of the gene to the phenotype within the paper. Amelie will return the papers in the form of PUBMED ids. G2PML offers facilites to use Amelie through its Web API and it is as simple as follows if we continue with the example of PD and the ensemble we got already.
+
+```{r}
+pdamelie = annotateWithAmelie(ensemble=pdmodel)
+dim(pdamelie)
+```
+
 
 
 
