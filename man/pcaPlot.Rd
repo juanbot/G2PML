@@ -20,7 +20,8 @@ to select which features appear in the plot.}
 Just a plot, nothing to return
 }
 \description{
-Title Using a PCA data projection approach to display your ML data
+This method can be useful to see how your disease genes and your predicction genes are
+scattered through a PCA dimensions data projection.
 }
 \examples{
 pcaPlot(fsdata=fspd,ensemble=pdmodel,r=0.4,bestPCAs=T)

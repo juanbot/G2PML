@@ -19,7 +19,8 @@ A UMAP scatter plot based on the two UMAP dimensions for genes when using only t
 as filtered by the value of \code{r}
 }
 \description{
-Title Using an UMAP approach to plot the ML data projection into 2 dimensions
+This method can be useful to see how your diseas genes and your predicction are
+scattered through a 2D UMAP plot.
 }
 \examples{
 umapPlot(fsdata=fspd,ensemble=pdmodel,r=0.4)

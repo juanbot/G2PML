@@ -2,7 +2,7 @@
 % Please edit documentation in R/anntation.R
 \name{amelieStudy}
 \alias{amelieStudy}
-\title{Title How significant are your Amelie annotations?}
+\title{How significant are your Amelie annotations?}
 \usage{
 amelieStudy(rndfile = NULL, ameliefile = NULL, doplot = F,
   panel = "PD", ensemble = NULL, phenotype = NULL, nNull = 100)

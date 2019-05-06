@@ -1,4 +1,5 @@
-#' Title Plotting results of your feature selection
+#' Plotting results of your feature selection
+#'
 #' The results from a call to \code{\link{caret::featureSelection}} can be plotted with this function
 #'
 #' @param fsdata The results from \code{\link{caret::featureSelection}}
@@ -95,6 +96,9 @@ featureSelectionPlot = function(fsdata,r=0.6){
 
 #' Title Using an UMAP approach to plot the ML data projection into 2 dimensions
 #'
+#' This method can be useful to see how your diseas genes and your predicction are
+#' scattered through a 2D UMAP plot.
+#'
 #' @param fsdata The results from \code{\link{caret::featureSelection}}
 #' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
 #' to select which features appear in the plot.
@@ -158,6 +162,9 @@ umapPlot = function(fsdata,r=0.6,ensemble){
 }
 
 #' Title Using a PCA data projection approach to display your ML data
+#'
+#' This method can be useful to see how your disease genes and your predicction genes are
+#' scattered through a PCA dimensions data projection.
 #'
 #' @param fsdata The results from \code{\link{caret::featureSelection}}
 #' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
@@ -240,7 +247,7 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
 }
 
 
-#' Title Annotate your new predictions with papers backing up the associations with the phenotype
+#' Annotate your new predictions with papers backing up the associations with the phenotype
 #'
 #' Amelie is a nice tool (https://amelie.stanford.edu/) to annotate your genes with papers reporting about
 #' Mendelian associations of your gene (or related) to a given phenotype (or phenotypes). Associations found
@@ -249,13 +256,13 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
 #' HPO terms. It can work in two different ways. It can do that for you, or it can construct a null set of
 #' genes associated with the phenotype to compare random chance with your real predictions.
 #'
-#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold()}}
 #' @param phenotype A list of HPO terms that match the phenotype represented by your gene panel.
 #' You can get your list of phenotypes by browsing at http://hpo.jax.org/
 #' @param getNullDistribution If set to TRUE, what is does is repeating \code{nNull} times the following:
 #' randomly select a gene set from the whole genome, with same size as predictions, ask Amelie about
-#' associations to the phenotype, store and repeat. Normally, this way of calling \code{annotateWithAmelie()}
-#' will only be done by \code{amelieStudy()}
+#' associations to the phenotype, store and repeat. Normally, this way of calling \code{\link{caret::annotateWithAmelie()}}
+#' will only be done by \code{\link{caret::amelieStudy()}}
 #' @param nNull The number of times to repeat asking Amelie for a random gene set.
 #'
 #' @return It will return a data frame with a row for each single association found, and columns for the panel,
@@ -350,7 +357,7 @@ annotateWithAmelie = function(ensemble,
   return(as.data.frame(allresults,stringsAsFactors=F))
 }
 
-#' Title How significant are your Amelie annotations?
+#' How significant are your Amelie annotations?
 #'
 #' Amelie annotations on you gene predictions are great as a first step to a more in deep search in
 #' the literature for papers backing up your predictions. However, Amelie can be useful as well to
@@ -523,8 +530,10 @@ seedGenesVsPredictions = function(model,
           font.size=6)
 }
 
-#' Title tSNE visualization of our data and study on distance of predictions to
-#' disease genes when comparing with random genes. It generates the plot in a progressive manner.
+#' tSNE visualization of our data and study on distance of predictions to
+#' disease genes when comparing with random genes.
+#'
+#' It generates the plot in a progressive manner.
 #' In a 1st pdf, it plots all protein coding genes, with same grey color. In a second color, it
 #' plots disease genes in orange, with their names as labels. In a 3rd plot,  we shoe neighbouring
 #' genes for the red ones. Finally, in the last plot, predictions are shown in red.

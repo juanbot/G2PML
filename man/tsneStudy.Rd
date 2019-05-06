@@ -2,11 +2,8 @@
 % Please edit documentation in R/anntation.R
 \name{tsneStudy}
 \alias{tsneStudy}
-\title{Title tSNE visualization of our data and study on distance of predictions to
-disease genes when comparing with random genes. It generates the plot in a progressive manner.
-In a 1st pdf, it plots all protein coding genes, with same grey color. In a second color, it
-plots disease genes in orange, with their names as labels. In a 3rd plot,  we shoe neighbouring
-genes for the red ones. Finally, in the last plot, predictions are shown in red.}
+\title{tSNE visualization of our data and study on distance of predictions to
+disease genes when comparing with random genes.}
 \usage{
 tsneStudy(fsdata, r = 0.6, ensemble, outpath = "~/Downloads//",
   altPanel = NULL)
@@ -28,8 +25,7 @@ at the `ensemble` will be used}
 Nothing, just plots into files
 }
 \description{
-Title tSNE visualization of our data and study on distance of predictions to
-disease genes when comparing with random genes. It generates the plot in a progressive manner.
+It generates the plot in a progressive manner.
 In a 1st pdf, it plots all protein coding genes, with same grey color. In a second color, it
 plots disease genes in orange, with their names as labels. In a 3rd plot,  we shoe neighbouring
 genes for the red ones. Finally, in the last plot, predictions are shown in red.

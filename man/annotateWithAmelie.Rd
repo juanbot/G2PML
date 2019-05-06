@@ -2,21 +2,21 @@
 % Please edit documentation in R/anntation.R
 \name{annotateWithAmelie}
 \alias{annotateWithAmelie}
-\title{Title Annotate your new predictions with papers backing up the associations with the phenotype}
+\title{Annotate your new predictions with papers backing up the associations with the phenotype}
 \usage{
 annotateWithAmelie(ensemble, phenotype = "HP:0001300",
   getNullDistribution = F, nNull = 100)
 }
 \arguments{
-\item{ensemble}{The result to call \code{\link{caret::ensembleLearnKFold}}}
+\item{ensemble}{The result to call \code{\link{caret::ensembleLearnKFold()}}}
 
 \item{phenotype}{A list of HPO terms that match the phenotype represented by your gene panel.
 You can get your list of phenotypes by browsing at http://hpo.jax.org/}
 
 \item{getNullDistribution}{If set to TRUE, what is does is repeating \code{nNull} times the following:
 randomly select a gene set from the whole genome, with same size as predictions, ask Amelie about
-associations to the phenotype, store and repeat. Normally, this way of calling \code{annotateWithAmelie()}
-will only be done by \code{amelieStudy()}}
+associations to the phenotype, store and repeat. Normally, this way of calling \code{\link{caret::annotateWithAmelie()}}
+will only be done by \code{\link{caret::amelieStudy()}}}
 
 \item{nNull}{The number of times to repeat asking Amelie for a random gene set.}
 }

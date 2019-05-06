@@ -2,8 +2,7 @@
 % Please edit documentation in R/anntation.R
 \name{featureSelectionPlot}
 \alias{featureSelectionPlot}
-\title{Title Plotting results of your feature selection
-The results from a call to \code{\link{caret::featureSelection}} can be plotted with this function}
+\title{Plotting results of your feature selection}
 \usage{
 featureSelectionPlot(fsdata, r = 0.6)
 }
@@ -17,7 +16,6 @@ to select which features appear in the plot.}
 It plots a feature selection result organized into the categories to which selected features belong to.
 }
 \description{
-Title Plotting results of your feature selection
 The results from a call to \code{\link{caret::featureSelection}} can be plotted with this function
 }
 \examples{
