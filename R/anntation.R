@@ -1,12 +1,17 @@
-#' Title
+#' Title Plotting results of your feature selection
+#' The results from a call to \code{\link{caret::featureSelection}} can be plotted with this function
 #'
-#' @param fsdata
-#' @param r
+#' @param fsdata The results from \code{\link{caret::featureSelection}}
+#' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
+#' to select which features appear in the plot.
 #'
-#' @return
+#' @return It plots a feature selection result organized into the categories to which selected features belong to.
 #' @export
 #'
 #' @examples
+#' genes <- getGenesFromPanelApp(disorder="Neurology and neurodevelopmental disorders",
+#'   panel="Parkinson Disease and Complex Parkinsonism", color = "green")
+#' featureSelectionPlot(featureSelection(genes, controls = "allgenome"))
 featureSelectionPlot = function(fsdata,r=0.6){
 
   counts = getVarsFromFS(fsdata,r,T)
@@ -76,8 +81,6 @@ featureSelectionPlot = function(fsdata,r=0.6){
 
   text(x=rep(xmin+xmin*0.1,5),y=c(0,lineheight[1:(length(lineheight))])+1,pos=4,
        labels=usedLabels,cex=0.5,col="blue")
-
-
   text(x=fsin$meaneffect,y=1:length(fsin$meaneffect),
        cex=0.5,
        labels=prettyPredictorName(fsin$feature))
@@ -90,6 +93,18 @@ featureSelectionPlot = function(fsdata,r=0.6){
 }
 
 
+#' Title Using an UMAP approach to plot the ML data projection into 2 dimensions
+#'
+#' @param fsdata The results from \code{\link{caret::featureSelection}}
+#' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
+#' to select which features appear in the plot.
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#'
+#' @return A UMAP scatter plot based on the two UMAP dimensions for genes when using only the features from \code{fsdata}
+#' as filtered by the value of \code{r}
+#' @export
+#'
+#' @examples umapPlot(fsdata=fspd,ensemble=pdmodel,r=0.4)
 umapPlot = function(fsdata,r=0.6,ensemble){
 
   vars = getVarsFromFS(fsdata,r,F)
@@ -142,6 +157,18 @@ umapPlot = function(fsdata,r=0.6,ensemble){
          legend=c("genome","disease","predictions"),cex=0.6)
 }
 
+#' Title Using a PCA data projection approach to display your ML data
+#'
+#' @param fsdata The results from \code{\link{caret::featureSelection}}
+#' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
+#' to select which features appear in the plot.
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#' @param bestPCAs If TRUE, we select PCA1 and 2 on the basis of those with best p-value on the correlation with phenotype
+#'
+#' @return Just a plot, nothing to return
+#' @export
+#'
+#' @examples pcaPlot(fsdata=fspd,ensemble=pdmodel,r=0.4,bestPCAs=T)
 pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
 
   vars = getVarsFromFS(fsdata,r,F)
@@ -213,11 +240,34 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
 }
 
 
+#' Title Annotate your new predictions with papers backing up the associations with the phenotype
+#'
+#' Amelie is a nice tool (https://amelie.stanford.edu/) to annotate your genes with papers reporting about
+#' Mendelian associations of your gene (or related) to a given phenotype (or phenotypes). Associations found
+#' are scored with number in [0,100], more details at the Web site. This method takes your ensemble,
+#' which stores your predictions and give them to Amelie to look for papers associating your genes and the
+#' HPO terms. It can work in two different ways. It can do that for you, or it can construct a null set of
+#' genes associated with the phenotype to compare random chance with your real predictions.
+#'
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#' @param phenotype A list of HPO terms that match the phenotype represented by your gene panel.
+#' You can get your list of phenotypes by browsing at http://hpo.jax.org/
+#' @param getNullDistribution If set to TRUE, what is does is repeating \code{nNull} times the following:
+#' randomly select a gene set from the whole genome, with same size as predictions, ask Amelie about
+#' associations to the phenotype, store and repeat. Normally, this way of calling \code{annotateWithAmelie()}
+#' will only be done by \code{amelieStudy()}
+#' @param nNull The number of times to repeat asking Amelie for a random gene set.
+#'
+#' @return It will return a data frame with a row for each single association found, and columns for the panel,
+#' the gene, the phenotype"panel", the Amelie score, the PUBMED id of the paper, its title and the jornal of
+#' publishing. If getNullDistribution it will add another column for indexing the random gene set call
+#' @export
+#'
+#' @examples
 annotateWithAmelie = function(ensemble,
                               phenotype="HP:0001300",
                               getNullDistribution=F,
-                              nNull=100,
-                              only.journals=T){
+                              nNull=100){
   panel = ensemble[[1]]$panel
   genes = ensemble$eval$finalpreds
   allresults = NULL
@@ -300,8 +350,37 @@ annotateWithAmelie = function(ensemble,
   return(as.data.frame(allresults,stringsAsFactors=F))
 }
 
-amelieStudy = function(rndfile = "~/Dropbox/KCL/talks/nih2019/pdAmelieRandom.rds",
-                       ameliefile="~/tmp/results.rds",
+#' Title How significant are your Amelie annotations?
+#'
+#' Amelie annotations on you gene predictions are great as a first step to a more in deep search in
+#' the literature for papers backing up your predictions. However, Amelie can be useful as well to
+#' calibrate how effective are your predictions, i.e. if we are doing better than random chance when
+#' predicting gene assocations with phenotype. This method encapsulates all the stuff for you.
+#'
+#' @param rndfile A file with the RDS results of a call to \code{annotateWithAmelie()}. Note that
+#' depending on the number of random calls you wanted to make with Amelie, calling that method
+#' with \code{getNullDistribution} set to TRUE can take some time. Besides, once you made a call for
+#' a phenotype, there is no need to do it again for the same phenotype.
+#' @param ameliefile A file with the RDS results of a call to \code{annotateWithAmelie()} with
+#' \code{getNullDistribution} set to FALSE.
+#' @param doplot If TRUE, it will generate a plot with comparison between random chance and your
+#' predictions in regard to number of hits and quality of predictions
+#' @param panel A string with a pretty name for the panel as we want it to appear in the plots titles
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#' @param phenotype A list of HPO terms that match the phenotype represented by your gene panel.
+#' You can get your list of phenotypes by browsing at http://hpo.jax.org/
+#' @param nNull The number of random queries for Amelie
+#'
+#' @return A list with three elements. They are all vectors with `nNull` + 1 length. The first
+#' `nNull` values of all the three vectors correspond to random queries, the `nNull` + 1 is the
+#' result of the Amelie query with your predictions. The first vector shows the number of
+#' assocations found. The second vector the mean scores for the associations. The last vector all
+#' results for each query. It generates a plot when `doplot` is set to TRUE.
+#' @export
+#'gcount=genecount,scorecount=brutecount,result=result))
+#' @examples
+amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRandom.rds",
+                       ameliefile= NULL, #"~/tmp/results.rds",
                        doplot=F,panel="PD",
                        ensemble=NULL,
                        phenotype=NULL,
@@ -365,11 +444,19 @@ amelieStudy = function(rndfile = "~/Dropbox/KCL/talks/nih2019/pdAmelieRandom.rds
   return(list(gcount=genecount,scorecount=brutecount,result=result))
 }
 
+#' Title Still under development
+#'
+#' @param model
+#' @param panel
+#' @param whereToCompare
+#'
+#' @return
+#' @export
+#'
+#' @examples
 seedGenesVsPredictions = function(model,
                                   panel,
                                   whereToCompare="rea"){
-
-
   preds = model$eval$finalpreds
   genes = unique(unlist(lapply(model,function(x){ return(x$genes[x$condition == "Disease"])})))
   preds = bitr(preds,fromType="SYMBOL",toType="ENTREZID",OrgDb="org.Hs.eg.db")
@@ -436,6 +523,24 @@ seedGenesVsPredictions = function(model,
           font.size=6)
 }
 
+#' Title tSNE visualization of our data and study on distance of predictions to
+#' disease genes when comparing with random genes. It generates the plot in a progressive manner.
+#' In a 1st pdf, it plots all protein coding genes, with same grey color. In a second color, it
+#' plots disease genes in orange, with their names as labels. In a 3rd plot,  we shoe neighbouring
+#' genes for the red ones. Finally, in the last plot, predictions are shown in red.
+#'
+#' @param fsdata The results from \code{\link{caret::featureSelection}}
+#' @param r It has the same meaning as in \code{caret::featureSelection}. Higher the value, most selective is the filter
+#' to select which features appear in the plot.
+#' @param ensemble The result to call \code{\link{caret::ensembleLearnKFold}}
+#' @param outpath Where to store the plots
+#' @param altPanel Pretty name for the panel, to be used at the plot. Otherwise, the one appearing
+#' at the `ensemble` will be used
+#'
+#' @return Nothing, just plots into files
+#' @export
+#'
+#' @examples tsneStudy(fsdata=fspd,ensemble=pdmodel,r=0.4,altPanel="PD")
 tsneStudy = function(fsdata,r=0.6,ensemble,outpath="~/Downloads//",altPanel=NULL){
 
   alldata = fromGenes2MLData(genes=NULL,which.controls="allgenome",
@@ -552,6 +657,4 @@ tsneStudy = function(fsdata,r=0.6,ensemble,outpath="~/Downloads//",altPanel=NULL
   dev.off()
 
 
-  print(accdist)
-  print(rnddists)
 }

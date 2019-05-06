@@ -7,11 +7,11 @@
 ensembleLearnKFold(panel = "Congenital_myopathy", methods = c("rpart",
   "C5.0Tree", "svmRadial", "rf", "sparseLDA", "kknn", "naive_bayes"),
   k = 5, seed = 12345, nboot = 200, tuneLength = 5, nsamps = 5,
-  auto = F, maxTrials = 5, controls = "allghosh", fs = "own",
+  auto = T, maxTrials = 5, controls = "allghosh", fs = "own",
   fsThreshold = 0.6, qmeasure = "kappa")
 }
 \arguments{
-\item{pathfs}{}
+\item{nsamps}{}
 }
 \description{
 Title
