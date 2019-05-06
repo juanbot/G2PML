@@ -6,7 +6,7 @@ This is set of datasets and software tools to study monogenic diseases. We study
 
 As we said, we study the disease through its gene panel. Therefore, any disease or phenotype that can be described through the genes associated to monogenic forms of the disease can be studied with this tool. Our approach to the disease is by describing genes in terms of (a) genetic constraint related properties, (b) genomic related properties and (c) transcriptomics. 
 
-With G2PML and your panel P={g1,g2,...,gn} of choice, where gi is the i-th gene, you can
+With G2PML and your panel $P=\{g_1,g_2,...,g_n\}$ of choice, where gi is the i-th gene, you can
 
 * Perform an analysis on which features are relevant to distinguish those genes from the rest
 
