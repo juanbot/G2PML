@@ -202,8 +202,9 @@ cat("We got annotations for",
     "% of the genes")
 pdamelie = na.omit(pdamelie)
 hist(as.numeric(pdamelie$confidence),main="Amelie scores for PD predictions",xlab="Scores from 0 to 100",col=rgb(0,0,1,1/4))
-
+print(mean(as.numeric(pdamelie$confidence)))
 ```
+
 
 And if we focus on genes with score 100, we get papers like (only the 1st 10 shown)
 
@@ -222,12 +223,22 @@ And of course we can annotate our gene predictions with tools as the gProfileR R
 enrpd = gProfileR::gprofiler(query=pdmodel$eval$finalpreds,src_filter=c("GO","KEGG","REAC","HP","HPA","OMIM"))
 ```
 
-So we can get a hint of what we find with wordcloud
+So we can get a hint of what we find with wordcloud, from left to right, top to bottom, the cellular component in the GO ontology, molecular function from the same ontology, Human phenotype terms and REACTOME pathways.
 
 ```{r,cache=T}
-wordcloud::wordcloud(enrpd$term.name,random.order=F,min.freq=1)
+jpeg("pdwordcloud.png",width=600,height=600)
+par(mfrow=c(2,2))
+wordcloud::wordcloud(enrpd$term.name[enrpd$domain == "CC"],random.order=F,min.freq=1,max.words=40)
+wordcloud::wordcloud(enrpd$term.name[enrpd$domain == "MF"],random.order=F,min.freq=1,max.words=40)
+wordcloud::wordcloud(enrpd$term.name[enrpd$domain == "hp"],random.order=F,min.freq=1,max.words=40)
+wordcloud::wordcloud(enrpd$term.name[enrpd$domain == "rea"],random.order=F,min.freq=1,max.words=40)
+dev.off()
+par(mfrow=c(1,1))
 ```
 
+And we get
+
+![From left to right, top to bottom: word clouds for CC, MM, HP and REACTOME](pdwordcloud.jpeg)
 
 
 
