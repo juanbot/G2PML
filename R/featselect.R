@@ -18,7 +18,6 @@
 #' @param genes chr vector. Gene symbols - can be returned from
 #'   \code{\link{getGenesFromPanelApp}}.
 #' @param seed num scalar. Random seed for reproducibility.
-#' @param useSMOTE
 #' @param sizes int vector. Sizes to be used in the recursive feature
 #'   elimination \code{\link{caret::rfe}}.
 #' @param k int scalar. Factor by which to split training set for k-fold cross
@@ -51,7 +50,6 @@ featureSelection = function(genes=NULL,
                             repeats=10,
                             gacontrols=-1){
 
-  library(DMwR)
   allgenes = genes
   cat("We'll work with",length(allgenes),"disease genes\n")
   mldata = fromGenes2MLData(genes=allgenes,
@@ -71,8 +69,6 @@ featureSelection = function(genes=NULL,
     condition = lmldata$condition
     lmldata$gene = NULL
     lmldata$condition = NULL
-
-
 
     fcondition = as.factor(condition)
     ctrl = caret::rfeControl(functions=caret::rfFuncs,

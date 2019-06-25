@@ -194,8 +194,8 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
                              which.controls="allgenome")
 
   dataforpca = alldata[,vars]
-  dataforpca = prcomp(dataforpca,scale=T,retx=T)
-  naxes = which(cumsum(dataforpca$sdev^2/sum(dataforpca$sdev^2)) >= 0.8)[1]
+  dataforpca = prcomp(dataforpca,scale=T)
+  naxes = min(20,ncol(dataforpca$x))
   #And now the plot
   allpcadata = as.data.frame(cbind(dataforpca$x[,1:naxes],
                                    alldata$gene,alldata$condition),
@@ -240,9 +240,9 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
        xlab=xlab,
        ylab=ylab,
        main=paste0(title," : ",sum(cols=="red")," ",sum(cols=="orange")))
-  legend("bottomright",fill=c("grey","orange","red"),
+  legend("bottomright",fill=c("lightgrey","orange","red"),
          title="Gene types",
-         col=c("grey","orange","red"),
+         col=c("lightgrey","orange","red"),
          legend=c("genome","disease","predictions"),cex=0.6)
 }
 
