@@ -937,23 +937,34 @@ getGelGenes = function(panel,when="geOctober2018",evidence="HighEvidence"){
   return(g$GeneSymbol[g$LevelOfConfidence %in% evidence])
 }
 
-#' Title
+#' Obtaining ML features for your genes of interest
 #'
-#' @param genes
-#' @param addcontrols
-#' @param which.controls
-#' @param condition
-#' @param vars
-#' @param filter
-#' @param ...
+#' \code{fromGenes2MLData} obtains the genetic properties (transcriptomic,
+#' coexpression, genetic constraint.. etc) for a given set of gene symbols
 #'
-#' @return
+#' @param genes chr vector. Gene symbols of your disease genes - can be returned
+#'   from \code{\link{getGenesFromPanelApp}}.
+#' @param addcontrols lgl scalar. Do you want to add a set of control genes?
+#' @param which.controls chr scalar. One of "allghosh", "allgenome",
+#'   "clustering", "gauss", "gausskfold" specifying the set of control genes you
+#'   would like to use.
+#' @param condition chr vector. Vector of length genes describing which are
+#'   "Disease" and "Nondisease".
+#' @param vars chr vector. Names of features you would like to include.
+#' @param filter chr vector. Names of features you would like to exclude.
+#' @param ... additional arguments for clustering, only used when which.controls
+#'   is "clustering".
+#'
+#' @return df with features of input genes formatted for ML.
 #' @export
 #'
 #' @examples
+#' genes = getGenesFromPanelApp(disorder="Neurology and neurodevelopmental disorders",
+#'   panel="Parkinson Disease and Complex Parkinsonism", color = "green")
+#' genedata = fromGenes2MLData(genes=genes, which.controls="allgenome")
 fromGenes2MLData = function(genes,
                             addcontrols=T,
-                            which.controls="ghosh",
+                            which.controls="allghosh",
                             condition=NULL,
                             vars=NULL,
                             filter=c("DPI","DSI","ESTcount","constitutiveexons"),
