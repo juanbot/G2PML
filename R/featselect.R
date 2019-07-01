@@ -45,10 +45,9 @@ featureSelection = function(genes=NULL,
                             seed=12345,
                             sizes = c(5,10,20),
                             k=5,
-                            controls="allghosh",
-                            trnProp=0.9,
-                            repeats=10,
-                            gacontrols=-1){
+                            controls="allgenome",
+                            trnProp=0.8,
+                            repeats=10){
 
   allgenes = genes
   cat("We'll work with",length(allgenes),"disease genes\n")
@@ -88,12 +87,9 @@ featureSelection = function(genes=NULL,
           "from data before going for glm\n")
       lmldata = lmldata[,mask]
     }
-    condition[condition == "Disease"] = 0
-    condition[condition == "Nondisease"] = 1
-    condition = as.numeric(condition)
 
     lmProfile$optVariables = lmProfile$optVariables[lmProfile$optVariables %in% colnames(lmldata)]
-    fit = glm(formula=condition ~ . ,data=lmldata[,lmProfile$optVariables])
+    fit = glm(formula=fcondition ~ . ,data=lmldata[,lmProfile$optVariables],family ="binomial")
     lmProfile$myFit = fit
     fsruns[[run]] = lmProfile
   }
@@ -125,11 +121,9 @@ getVarsFromFS = function(fsdata,r=0.6,counts=F){
   k = length(fsdata)
   for(i in 1:k){
     fsdatal = fsdata[[i]]
-    if(is.null(fsdatal$optVariables)){
-      vars = c(vars,names(sort(table(fsdatal$variables$var[fsdatal$variables$Variables == fsdatal$bestSubset]),
-                               decreasing=T)))
-    }else
-      vars = c(vars,fsdatal$optVariables[fsdatal$optVariables %in% names(na.omit(fsdata[[i]]$myFit$coefficients))])
+    vars = c(vars,names(sort(table(fsdatal$variables$var[fsdatal$variables$Variables == fsdatal$bestSubset]),
+                             decreasing=T)))
+
   }
   minAppearance = floor(r*k)
 

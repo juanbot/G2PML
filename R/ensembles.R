@@ -20,6 +20,7 @@
 #'
 #' @examples
 ensembleLearnKFold = function(panel="Congenital_myopathy",
+                              genes=NULL,
                               methods=c("rpart",
                                         "C5.0Tree",
                                         "svmRadial",
@@ -40,7 +41,7 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                               nsamps=5,
                               auto=T,
                               maxTrials=5,
-                              controls = "allghosh",
+                              controls = "allgenome",
                               fs="own",
                               fsThreshold=0.6,
                               qmeasure="kappa"){
@@ -50,14 +51,12 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
 
   stopifnot(file.exists(panelf))
 
+  #Check which models are installed to try them
   methods = unlist(lapply(methods,
                           function(x){ tryCatch({ checkInstall(getModelInfo(x)$library); return(x)},
                                                 error = function(e){ print(e); NULL },0)}))
 
   cat(paste0("Available methods to use are ",paste0(methods,collapse=", ")),"\n")
-
-  #Check which models are installed to try them
-
 
   cat("Working now with genes from",panelf,"\n")
   finalEnsembles = NULL
@@ -67,9 +66,12 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
   expid = paste0(c(panel,method),collapse="_")
   cat("Working with",method,"\n")
   cat("Reading disease genes from",panelf,"\n")
-  genes = read.csv(panelf,stringsAsFactors=F)
-  genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
-  genes = na.omit(G2PML::fromSymbol2Hugo(genes))
+  if(is.null(genes)){
+    genes = read.csv(panelf,stringsAsFactors=F)
+    genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
+    genes = na.omit(G2PML::fromSymbol2Hugo(genes))
+  }else
+    genes = na.omit(G2PML::fromSymbol2Hugo(genes))
 
   if(controls == "allghosh"){
     ctrlpath=system.file("g2pml/controlgenes/allghosh/", "", package = "G2PML")
@@ -381,7 +383,7 @@ ensembleLearnAutonomous  = function(genes,
       cat("Using PPV\n")
       minThreshold = minPPV
     }else{
-      cat("Using as kappa,",qmeasure,"\n")
+      cat("Using as accuracy measure:",qmeasure,"\n")
       #kappa = mean(testModelEvaluation$kappa)
       kappa = mean(unlist(testModelEvaluation[qmeasure]))
       minThreshold = minKappa
@@ -749,7 +751,7 @@ ensembleLearnTournament  = function(genes,
             }else{
               cat("We can't improve kappa from",lastKappa,"to",kappa,"at iteration",i,", doing backtrack\n")
               ensemble =  ensemble[1:(i-1)]
-              optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method="allmethods",success=F)
+              optInfo[[length(optInfo) + 1]] = list(kappa=kappa,method=winnerIndex,success=F)
               nulltrials = nulltrials + 1
               allresults = allresults[allresults[,1] != i,]
               cat("Still",maxTrials - nulltrials,"left\n")
@@ -1335,9 +1337,9 @@ evalEnsemblesOneShot = function(ensembles,
                             trees=untilTree,
                             remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"]))
       milkedunr = milkEnsemble(ensemble = ensembles[[i]],
-                            cutoff=q,
-                            trees=untilTree,
-                            remove=NULL)
+                               cutoff=q,
+                               trees=untilTree,
+                               remove=NULL)
 
       hits = getHits(panel=ensembles[[i]]$panel,
                      genes=milked,
@@ -1688,4 +1690,36 @@ stats = function(preds,gtruth,alpha=0.5){
               costerror=costerror,
               derror=derror))
 }
+
+g2pmlRun = function(thresholds=seq(0.3,0.8,0.1),
+                    genes,
+                    seed=12345,
+                    sizes = c(5,10,20,30),
+                    k=5,
+                    controls="allgenome",
+                    trnProp=0.8,
+                    repeats=10,
+                    ...){
+
+  ensembles = NULL
+  fs = featureSelection(genes=genes,
+                        seed=seed,
+                        sizes=sizes,
+                        k=k,
+                        controls=controls,
+                        trnProp=0.8,
+                        repeats=repeats)
+
+  for(threshold in thresholds){
+    key = as.character(threshold)
+    if(length(getVarsFromFS(fsdata = fs,r = threshold)) > 20)
+      ensembles[[key]] = ensembleLearnKFold(genes=genes,fs=fs,
+                                          fsThreshold = threshold,...)
+  }
+  ensembles[["fs"]] = fs
+  return(ensembles)
+
+
+}
+
 

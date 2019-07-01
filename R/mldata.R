@@ -461,9 +461,9 @@ getGeneValuesDPI = function(genes,drop.na=F){
 getGeneValuesLoFTool = function(genes,drop.na=F){
   cat("Generating LoFTool scores data for",length(genes),"genes\n")
   loftool = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                             "genesScoresNBarahona.txt.zip"),
+                                  "genesScoresNBarahona.txt.zip"),
                            "genesScoresNBarahona.txt"),
-                      stringsAsFactors=F,sep=" ")
+                       stringsAsFactors=F,sep=" ")
   pli = tapply(loftool$LoFtool,loftool$Gene,max)
   if(drop.na)
     genes = genes[!is.na(match(genes,names(pli)))]
@@ -478,7 +478,7 @@ getGeneValuesEvoTol = function(genes,drop.na=F){
   cat("Generating EvoTol scores data for",length(genes),"genes\n")
   evotol = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),"EvoTolWebQuery13March2019.txt.zip"),
                           "EvoTolWebQuery13March2019.txt"),
-                       stringsAsFactors=F,sep="\t")
+                      stringsAsFactors=F,sep="\t")
   pli = tapply(evotol$evotol,evotol$gene,max)
   if(drop.na)
     genes = genes[!is.na(match(genes,names(pli)))]
@@ -493,8 +493,8 @@ getGeneValuesEvoTol = function(genes,drop.na=F){
 getGeneValuesRVIS = function(genes,drop.na=F){
   cat("Generating RVIS scores data for",length(genes),"genes\n")
   rvis = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                              "RVIS_Unpublished_ExACv2_March2017.zip"),"RVIS_Unpublished_ExACv2_March2017.txt"),
-                       stringsAsFactors=F,sep="\t")
+                               "RVIS_Unpublished_ExACv2_March2017.zip"),"RVIS_Unpublished_ExACv2_March2017.txt"),
+                    stringsAsFactors=F,sep="\t")
   pli = tapply(rvis$OEratio,rvis$gene,max)
   if(drop.na)
     genes = genes[!is.na(match(genes,names(pli)))]
@@ -509,8 +509,8 @@ getGeneValuesRVIS = function(genes,drop.na=F){
 getGeneValuespAD = function(genes,drop.na=F){
   cat("Generating probability of AD Model of inheritance scores data for",length(genes),"genes\n")
   pad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                           "moi.zip"),"moi.txt"),
-                    stringsAsFactors=F,sep="\t")
+                              "moi.zip"),"moi.txt"),
+                   stringsAsFactors=F,sep="\t")
   pli = tapply(pad$p_AD,pad$gene_symbol,max)
   if(drop.na)
     genes = genes[!is.na(match(genes,names(pli)))]
@@ -525,7 +525,7 @@ getGeneValuespAD = function(genes,drop.na=F){
 getGeneValuespAR = function(genes,drop.na=F){
   cat("Generating probability of AR Model of inheritance scores data for",length(genes),"genes\n")
   pad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                          "moi.zip"),"moi.txt"),
+                              "moi.zip"),"moi.txt"),
                    stringsAsFactors=F,sep="\t")
   pli = tapply(pad$p_AR,pad$gene_symbol,max)
   if(drop.na)
@@ -541,7 +541,7 @@ getGeneValuespAR = function(genes,drop.na=F){
 getGeneValuesgnomadpLI = function(genes,drop.na=F){
   cat("Generating gnomADpLI data for",length(genes),"genes\n")
   gnomad = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                             "gnomADrelease_2.1_ht_constraint_constraint.zip"),
+                                 "gnomADrelease_2.1_ht_constraint_constraint.zip"),
                           "gnomADrelease_2.1_ht_constraint_constraint.txt"),
                       stringsAsFactors=F,sep="\t")
   pli = tapply(gnomad$pLI,gnomad$gene,max)
@@ -762,7 +762,7 @@ getGeneValuesHexAlt5EST = function(genes,drop.na=F){
 getGeneValuesString = function(genes,drop.na=F){
   cat("Generating String experimental score data for",length(genes),"genes\n")
   domino = read.delim(unz(paste0(system.file("g2pml/", "", package = "G2PML"),
-                             "domino_score_all_final_03.04.17.txt.zip"),"domino_score_all_final_03.04.17.txt"),
+                                 "domino_score_all_final_03.04.17.txt.zip"),"domino_score_all_final_03.04.17.txt"),
                       stringsAsFactors=F,sep="\t")
   domino$Gene = fromSymbol2Hugo(domino$Gene)
   #pli = tapply(exac$mu_mis,exac$gene,max)
@@ -1186,11 +1186,11 @@ getCodingGenome = function(){
 fromEnsembl2GeneNameBM = function(genes,use38=T){
   if(use38){
     ensembl <- biomaRt::useMart(biomart="ENSEMBL_MART_ENSEMBL",
-                       dataset="hsapiens_gene_ensembl")
+                                dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_name"
   }else{
     ensembl <- biomaRt::useMart(host="jun2013.archive.ensembl.org",
-                       biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
+                                biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_id"
   }
 
@@ -1217,12 +1217,12 @@ fromGeneName2EnsemblBM = function(genes,use38=T){
 
   if(use38){
     ensembl <- biomaRt::useMart(host="www.ensembl.org",
-                       biomart="ENSEMBL_MART_ENSEMBL",
-                       dataset="hsapiens_gene_ensembl")
+                                biomart="ENSEMBL_MART_ENSEMBL",
+                                dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_name"
   }else{
     ensembl <- biomaRt::useMart(host="jun2013.archive.ensembl.org",
-                       biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
+                                biomart="ENSEMBL_MART_ENSEMBL", dataset="hsapiens_gene_ensembl")
     external.gene.att = "external_gene_id"
   }
 
@@ -1359,11 +1359,11 @@ getPanelFromPanelApp = function(disorder="Neurology and neurodevelopmental disor
   stopifnot(panel %in% panels$Name)
   panelweb = gsub(" ","%20",panel)
   req <- curl::curl_fetch_memory(paste0("panelapp.genomicsengland.co.uk/WebServices/get_panel/",
-                                    panelweb,"/"))
-    myjson = jsonlite::fromJSON(rawToChar(req$content))
-    out = cbind(myjson$result$Genes$GeneSymbol,myjson$result$Genes$LevelOfConfidence,
-                myjson$result$Genes$ModeOfInheritance,myjson$result$Genes$ModeOfPathogenicity)
-    colnames(out) = c("GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity")
+                                        panelweb,"/"))
+  myjson = jsonlite::fromJSON(rawToChar(req$content))
+  out = cbind(myjson$result$Genes$GeneSymbol,myjson$result$Genes$LevelOfConfidence,
+              myjson$result$Genes$ModeOfInheritance,myjson$result$Genes$ModeOfPathogenicity)
+  colnames(out) = c("GeneSymbol","LevelOfConfidence","ModeOfInheritance","ModeOfPathogenicity")
   return(as.data.frame(out,stringsAsFactors=F))
 }
 
@@ -1378,8 +1378,8 @@ getPanelFromPanelApp = function(disorder="Neurology and neurodevelopmental disor
 #'
 #' @examples
 getGenesFromPanelApp = function(disorder="Neurology and neurodevelopmental disorders",
-                     panel="Parkinson Disease and Complex Parkinsonism",
-                     color){
+                                panel="Parkinson Disease and Complex Parkinsonism",
+                                color){
 
   evidence = NULL
   if("red" %in% color)

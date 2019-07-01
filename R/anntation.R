@@ -1,3 +1,7 @@
+
+
+
+
 #' Plotting results of your feature selection
 #'
 #' The results from a call to \code{\link{caret::featureSelection}} can be plotted with this function
@@ -19,14 +23,10 @@ featureSelectionPlot = function(fsdata,r=0.6){
   names(counts) = prettyPredictorName(names(counts))
   fsin = getVarsMetaDataFromFS(fsdata,r,F)$meaneffects
   fsin = as.data.frame(fsin,stringsAsFactors=F)
-  fsin$meaneffect = -1*as.numeric(fsin$meaneffect)
-  fsin$meaneffect = 100*fsin$meaneffect/max(fsin$meaneffect)
+  #fsin$meaneffect = -1*as.numeric(fsin$meaneffect)
+  fsin$meaneffect = as.numeric(fsin$meaneffect)
   fsin = fsin[order(fsin$meaneffect,decreasing=T),]
-  enrichedfeatures = fsin$feature[1:10]
-  enrichedfeffect = fsin$meaneffect[1:10]
   last = nrow(fsin)
-  depletedfeatures = fsin$feature[last:last-5]
-  depletedfeffect = -1*fsin$meaneffect[last:last-5]
 
   colors=rep("green",length(fsin$meaneffect))
   xmin = min(fsin$meaneffect) + min(fsin$meaneffect)*0.5
@@ -43,7 +43,7 @@ featureSelectionPlot = function(fsdata,r=0.6){
              "Expression","Gene complexity")
   usedLabels = NULL
   i = 1
-  for(pattern in c("gnomad|RVIS|LoFTool","^MM","^Adjacency","^Expression")){
+  for(pattern in c("gnomad|RVIS|LoFTool|EvoTol","^MM","^Adjacency","^Expression")){
     occurrences = grep(pattern,fsin$feature)
     if(length(occurrences) > 0){
       #Then complexity
@@ -310,13 +310,13 @@ annotateWithAmelie = function(ensemble,
         #print(partial)
         allresults = rbind(allresults,cbind(rep(panel,nrow(partial)),
                                             rep(gene,nrow(partial)),
-                                            rep(phenotype,nrow(partial)),
+                                            rep(paste0(phenotype,collapse=", "),nrow(partial)),
                                             partial))
       }
 
       else{
         #cat("Nothing for",gene,"\n")
-        allresults = rbind(allresults,c(panel,gene,phenotype,NA,NA))
+        allresults = rbind(allresults,c(panel,gene,paste0(phenotype,collapse=", "),NA,NA))
       }
     }
   }
@@ -325,7 +325,10 @@ annotateWithAmelie = function(ensemble,
   #Now we get the title and journal
   by=200
   n = length(unique(na.omit(allresults[,5])))
-  indexes = seq(by,n,by)
+  if(n < by)
+    indexes = n
+  else
+    indexes = seq(by,n,by)
   if(!(n %in% indexes))
     indexes = c(indexes,n)
   lastindex = 1
@@ -335,7 +338,7 @@ annotateWithAmelie = function(ensemble,
   journals = NULL
   result = NULL
   for(index in indexes){
-    #cat("From",index,"\n")
+    cat("From",index,"\n")
     ids = paste0(allids[lastindex:index],collapse=",")
     result = c(result,fromJSON(postForm("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",db="pubmed",id=ids,retmode="json"))$result)
     setupids = allids[lastindex:index]
@@ -353,6 +356,7 @@ annotateWithAmelie = function(ensemble,
   }
 
   allresults = cbind(allresults,titles,jnames)
+  print(allresults)
   colnames(allresults) = c("panel","gene","phenotype","confidence","pubmedid","title","journal")
   return(as.data.frame(allresults,stringsAsFactors=F))
 }
@@ -412,6 +416,8 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
   else
     result[[length(result) + 1]] = readRDS(ameliefile)
 
+  print(result)
+
   for(j in 1:length(result)){
     results = result[[j]]
     gcount = 0
@@ -419,10 +425,14 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
     for(i in 1:length(results)){
       gene = unlist(results[[i]][[1]])
       partial = results[[i]][[2]]
-      if(length(partial) > 0){
-        partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
+
+      if(length(partial) > 1){
+        print("Partial")
+        print(partial)
+        if(typeof(partial) != "character")
+          partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
         #print(partial)
-        rndresults = rbind(rndresults,cbind(rep(j,nrow(partial)),partial))
+        #rndresults = rbind(rndresults,cbind(rep(j,nrow(partial)),partial))
         gcount = gcount + nrow(partial)
         bcount = bcount + sum(as.numeric(partial[,1]))
       }
@@ -431,7 +441,7 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
     brutecount = c(brutecount,bcount)
   }
 
-  if(doplot){
+  if(doplot & length(brutecount) > 10){
     nrandom = length(genecount) - 1
     par(mfrow=c(1,2))
     xlim=c(min(genecount),max(genecount))
@@ -448,6 +458,8 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
 
   }
   par(mfrow=c(1,1))
+  print("We are going to return this\n")
+  print(result)
   return(list(gcount=genecount,scorecount=brutecount,result=result))
 }
 
