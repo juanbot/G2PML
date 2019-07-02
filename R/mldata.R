@@ -1080,6 +1080,7 @@ fromGenes2MLData = function(genes,
 genLearningDataSet = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
                               sep="\t",
                               filter=NULL,
+                              silent=T,
                               newdata=T){
 
   f.in = paste0(system.file("g2pml/", "", package = "G2PML"),
@@ -1102,7 +1103,8 @@ genLearningDataSet = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
 
 
   if(!is.null(filter)){
-    cat("Removing columns for attributes",paste0(filter,collapse=" and "),"\n")
+    if(!silent)
+      cat("Removing columns for attributes",paste0(filter,collapse=" and "),"\n")
     mldata = mldata[,!(colnames(mldata) %in% filter)]
   }
   return(mldata)
