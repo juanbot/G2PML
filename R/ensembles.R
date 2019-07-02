@@ -1625,10 +1625,15 @@ getHits = function(panel,genes,
                    backgroundgenes=18000)
 {
   #cat("Getting hits for panel",panel,"\n")
+  ngf = paste0(newgenespath,"/",panel,".csv")
+  ogf = paste0(oldgenespath,"/",panel,".csv")
+  if(!file.exists(ngf) | !file.exists(ogf))
+    return(NULL)
+
   if(is.null(brandnew)){
-    newgenes = read.csv(paste0(newgenespath,"/",panel,".csv"),stringsAsFactors=F)
+    newgenes = read.csv(ngf,stringsAsFactors=F)
     newgenes = newgenes$GeneSymbol[newgenes$LevelOfConfidence %in% evidence]
-    oldgenes = read.csv(paste0(oldgenespath,"/",panel,".csv"),stringsAsFactors=F)
+    oldgenes = read.csv(ogf,stringsAsFactors=F)
     oldgenes = oldgenes$GeneSymbol[oldgenes$LevelOfConfidence %in% "HighEvidence"]
     brandnew = setdiff(newgenes,oldgenes)
     brandnew = na.omit(fromSymbol2Hugo(brandnew))
