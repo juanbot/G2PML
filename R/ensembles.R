@@ -46,10 +46,6 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                               fsThreshold=0.6,
                               qmeasure="kappa"){
 
-  panelf = paste0(system.file("g2pml/gel/geMarch2017/", "", package = "G2PML"),
-                  panel,".csv")
-
-  stopifnot(file.exists(panelf))
 
   #Check which models are installed to try them
   methods = unlist(lapply(methods,
@@ -57,16 +53,14 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                                                 error = function(e){ print(e); NULL },0)}))
 
   cat(paste0("Available methods to use are ",paste0(methods,collapse=", ")),"\n")
-
-  cat("Working now with genes from",panelf,"\n")
   finalEnsembles = NULL
-  #for(method in methods){
-  method = methods[1]
-  exprStr = ""
-  expid = paste0(c(panel,method),collapse="_")
-  cat("Working with",method,"\n")
-  cat("Reading disease genes from",panelf,"\n")
+  expid = panel
   if(is.null(genes)){
+    panelf = paste0(system.file("g2pml/gel/geMarch2017/", "", package = "G2PML"),
+                    panel,".csv")
+
+    stopifnot(file.exists(panelf))
+    cat("Reading disease genes from",panelf,"\n")
     genes = read.csv(panelf,stringsAsFactors=F)
     genes = genes$GeneSymbol[genes$LevelOfConfidence == "HighEvidence"]
     genes = na.omit(G2PML::fromSymbol2Hugo(genes))
