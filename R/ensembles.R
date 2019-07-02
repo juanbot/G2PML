@@ -1470,9 +1470,9 @@ evalEnsemblesOneShot = function(ensembles,
                           trees=untilTree,
                           remove=c(ensembles[[i]]$genes[ensembles[[i]]$condition == "Disease"]))
 
-    hits = getHits(panel=ensembles[[i]]$panel,
-                   genes=milked,
-                   brandnew=ensembles[[i]]$evaldisease)
+    #hits = getHits(panel=ensembles[[i]]$panel,
+    #               genes=milked,
+    #               brandnew=ensembles[[i]]$evaldisease)
 
     diseasegenes = c(diseasegenes, milked)
   }
@@ -1709,6 +1709,7 @@ g2pmlRun = function(thresholds=seq(0.3,0.8,0.1),
                     genes,
                     seed=12345,
                     sizes = c(5,10,20,30),
+                    kfs=5,
                     k=5,
                     controls="allgenome",
                     trnProp=0.8,
@@ -1719,7 +1720,7 @@ g2pmlRun = function(thresholds=seq(0.3,0.8,0.1),
   fs = featureSelection(genes=genes,
                         seed=seed,
                         sizes=sizes,
-                        k=k,
+                        k=kfs,
                         controls=controls,
                         trnProp=0.8,
                         repeats=repeats)
@@ -1727,7 +1728,7 @@ g2pmlRun = function(thresholds=seq(0.3,0.8,0.1),
   for(threshold in thresholds){
     key = as.character(threshold)
     if(length(getVarsFromFS(fsdata = fs,r = threshold)) > 20)
-      ensembles[[key]] = ensembleLearnKFold(genes=genes,fs=fs,
+      ensembles[[key]] = ensembleLearnKFold(genes=genes,fs=fs,k=k,
                                           fsThreshold = threshold,...)
   }
   ensembles[["fs"]] = fs
