@@ -1065,43 +1065,22 @@ caretLearn = function(in.file,
     data.in = fromGenes2MLData(genes)
   }
 
+  data.in$gene = NULL
+  condition = data.in$condition
+  data.in$condition = NULL
+  #numcolumns = which(colnames(data.in) != "condition")
 
-  data.in = data.in[,colnames(data.in) != "gene"]
-  numcolumns = which(colnames(data.in) != "condition")
+  nzv = nearZeroVar(data.in, saveMetrics= TRUE)
+  data.in = data.in[,!nzv$zeroVar]
+  descrCor = cor(data.in) # builds correlation matrix
+  highlyCorDescr = findCorrelation(descrCor, cutoff = 1,
+                                   names = T, verbose = F)
+  data.in = data.in[,!(colnames(data.in) %in% highlyCorDescr)]
+  data.in$condition = condition
+
   mask = which(startsWith(colnames(data.in),"RankedMM"))
   mask = c(mask,which(startsWith(colnames(data.in),"ExprSpecific")))
   mask = c(mask,which(startsWith(colnames(data.in),"AdjSpecific")))
-
-
-  for(i in mask){
-    data.in[,i] = as.factor(data.in[,i])
-  }
-
-  #Removing factors with less than 2 levels
-  mask = NULL
-  for(i in 1:ncol(data.in)){
-    if(is.factor(data.in[,i])){
-      if(length(levels(data.in[,i])) >= 2){
-        mask = c(mask,TRUE)
-      }else
-        mask = c(mask,FALSE)
-    }else if(typeof(data.in[,i]) == "character" & i != which(colnames(data.in) == "condition")){
-      if(length(unique(data.in[,i])) <= 1 | sum(data.in[,i] == "1") < 5 | sum(data.in[,i] == "0") < 5)
-        mask = c(mask,FALSE)
-      else mask = c(mask,TRUE)
-    } else
-      mask = c(mask,TRUE)
-  }
-
-
-
-  #Keep only those which are informative
-  data.in = data.in[,mask]
-  if(!silent){
-    if(sum(!mask) > 0)
-      cat("After preparing the data for learning, we quick out",sum(!mask)," atributes\n")
-    cat("After preparing the data for learning, we still have",ncol(data.in)," atributes\n")
-  }
 
 
 
@@ -1213,10 +1192,6 @@ ensemblePredict = function(genes,
     if(!silent)
       cat("Predicting with simple model",i,"and method",method,"\n")
 
-    mask = c(grep("ExprSpecific",colnames(data.in)),
-             grep("AdjSpecific",colnames(data.in)),
-             grep("RankedMMSpecific",colnames(data.in)))
-    colnames(data.in)[mask] = paste0(colnames(data.in[mask]),"1")
 
     if(nrow(data.in) == 0)
       return(NULL)

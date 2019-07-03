@@ -60,6 +60,7 @@ featureSelection = function(genes=NULL,
   fsruns = NULL
   gcondition = mldata$condition
 
+
   for(run in 1:repeats){
 
     the_n = floor(length(genes)*trnProp)
@@ -68,6 +69,14 @@ featureSelection = function(genes=NULL,
     condition = lmldata$condition
     lmldata$gene = NULL
     lmldata$condition = NULL
+
+    nzv = nearZeroVar(lmldata, saveMetrics= TRUE)
+    lmldata = lmldata[,!nzv$zeroVar]
+    descrCor = cor(lmldata) # builds correlation matrix
+    highlyCorDescr = findCorrelation(descrCor, cutoff = .9,
+                                       names = T, verbose = F)
+    lmldata = lmldata[,!(colnames(lmldata) %in% highlyCorDescr)]
+
 
     fcondition = as.factor(condition)
     ctrl = caret::rfeControl(functions=caret::rfFuncs,
