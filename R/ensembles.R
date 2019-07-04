@@ -297,7 +297,6 @@ ensembleLearnTournament  = function(genes,
   }else
     lastKappa = -1
   nulltrials = 0
-  maxTrials = maxTrials*length(methods)
   methodIndex = 1
   optInfo = list()
   nonOptimal=T
@@ -1152,7 +1151,7 @@ evalEnsembles = function(ensembles){
   diseasegenes = NULL
   minkappa = 1
   maxkappa = -1
-
+  meankappa = 0
   for(i in 1:k){
     kappa = NULL
     untilTree = ensembles$models[[i]]$nboot
