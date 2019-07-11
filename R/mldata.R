@@ -58,7 +58,7 @@ generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_ne
   hugo.genes = hugo.genes[mask]
 
   valgenes = casecontrolset$genes
-  #myens <<- fromGeneName2EnsemblBM(valgenes)
+  myens <<- fromGeneName2EnsemblBM(valgenes)
   names(valgenes) = myens
   #names(valgenes) = fromGeneName2EnsemblBM(valgenes)
 

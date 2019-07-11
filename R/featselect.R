@@ -165,7 +165,7 @@ getVarsFromFS = function(fsdata,r=0.6,counts=F){
 #'
 #'@examples
 #'getVarsMetaDataFromFS(allfsdata, r = 0.6, panel = "Unknown")
-getVarsMetaDataFromFS = function(allfsdata,r=r,panel="Unknown"){
+getVarsMetaDataFromFS = function(allfsdata,r=0.6,panel="Unknown"){
 
   allfeatures = NULL
   allsigns = NULL
@@ -275,4 +275,92 @@ getVarsMetaDataFromFS = function(allfsdata,r=r,panel="Unknown"){
   return(list(features=allfeatures,signs=allsigns,effects=alleffects,meaneffects=allmeaneffectstab))
 }
 
+#'Which direction and to what extent do your important features affect the
+#'gene's likelihood of being disease causing?
+#'
+#'\code{getVarsFromFS} extracts from the output of
+#'\code{\link{featureSelection}} the most important features based a voting
+#'system across bootstraps. Then for the most-voted features obtain the sign and
+#'effect sizes of each feature.
+#'
+#'@inheritParams getVarsFromFS
+#'
+#'@param allfsdata list of rfe objects. Output of \code{\link{featureSelection}}.
+#'@param panel chr scalar. The GE panel name from which input genes were
+#'  extracted.
+#'
+#'@return list with all counts, signs, effect sizes and mean effect sizes of all
+#'  important features across all bootstraps
+#'
+#'@export
+#'
+#'@examples
+#'getVarsMetaDataFromFS(allfsdata, r = 0.6, panel = "Unknown")
+getVarsMetaDataFromCaretFS = function(allfsdata,r=0.6,panel="Unknown"){
+
+  allfeatures = NULL
+  allsigns = NULL
+  alleffects = NULL
+  allmeaneffect = NULL
+  alleffectstab = NULL
+  allmeaneffectstab = NULL
+
+  availfiles = 0
+  cat("Working now with",panel,"\n")
+  features = NULL
+  meaneffect = NULL
+  folds = length(allfsdata)
+
+  selected = getVarsFromFS(allfsdata,r=r)
+  fcounts = getVarsFromFS(allfsdata,r=r,T)
+  allfeatures = fcounts
+  signs = NULL
+  effects = NULL
+  models = NULL
+  folds = length(allfsdata)
+  for(k in 1:folds){
+    fsdata = allfsdata[[k]]
+
+    for(sel in selected){
+      if(is.null(meaneffect))
+        meaneffect[[sel]] = NULL
+      if(is.null(effects))
+        effects[[sel]] = NULL
+      if(is.null(signs))
+        signs[[sel]] = NULL
+
+      mvalue = mean(fsdata$variables$Disease[fsdata$variables$var == sel])
+
+      if(!is.na(mvalue)){
+        if(!(sel %in% names(meaneffect)))
+          meaneffect[[sel]] = mvalue
+        else
+          meaneffect[[sel]] = paste0(meaneffect[[sel]],":",mvalue)
+
+        if(!(sel %in% names(signs)))
+          signs[[sel]] = sign(mvalue)
+        else
+          signs[[sel]] = paste0(signs[[sel]],":",sign(mvalue))
+      }
+    }
+  }
+
+  allsigns = unlist(signs)
+  allmeaneffect = unlist(meaneffect)
+
+  localdata = as.matrix(unlist(allmeaneffect))
+  localdata = cbind(rownames(localdata),localdata)
+  allmeaneffectstab = rbind(allmeaneffectstab,
+                            cbind(rep(panel,
+                                      nrow(localdata)),
+                                  localdata,
+                                  unlist(lapply(localdata[,2],function(x){ mean(as.numeric(unlist(strsplit(x,":"))))})),
+                                  rep(folds,nrow(localdata))))
+
+
+
+  colnames(allmeaneffectstab) = c("panel","feature","allmeaneffects","meaneffect","coverage")
+
+  return(list(features=allfeatures,signs=allsigns,meaneffects=allmeaneffectstab))
+}
 

@@ -21,7 +21,7 @@ featureSelectionPlot = function(fsdata,r=0.6){
 
   counts = getVarsFromFS(fsdata,r,T)
   names(counts) = prettyPredictorName(names(counts))
-  fsin = getVarsMetaDataFromFS(fsdata,r,F)$meaneffects
+  fsin = getVarsMetaDataFromCaretFS(fsdata,r,F)$meaneffects
   fsin = as.data.frame(fsin,stringsAsFactors=F)
   #fsin$meaneffect = -1*as.numeric(fsin$meaneffect)
   fsin$meaneffect = as.numeric(fsin$meaneffect)
@@ -274,39 +274,48 @@ pcaPlot = function(fsdata,r=0.6,ensemble,bestPCAs=F){
 annotateWithAmelie = function(ensemble,
                               phenotype="HP:0001300",
                               getNullDistribution=F,
-                              nNull=100){
-  panel = ensemble[[1]]$panel
-  genes = ensemble$eval$finalpreds
+                              nNull=100,
+                              silent=T){
+  panel = ensemble$models[[1]]$panel
+  genes = ensemble$finalpreds
   allresults = NULL
-  cat("Working with",panel,"\n")
-  cat("Working with",phenotype,"\n")
+  if(!silent)
+    cat("Working with",panel,"\n")
+  if(!silent)
+    cat("Working with",phenotype,"\n")
 
   if(getNullDistribution){
-    genes = getCodingGenome()
-    gsize = length(ensemble$eval$finalpreds)
+    allgenes = getCodingGenome()
+    gsize = length(genes)
     for(i in 1:nNull){
-      cat("Random query:",i,"\n")
-      rgenes = genes[sample(1:length(genes),gsize)]
+      if(!silent)
+        cat("Random query:",i,"\n")
+      rgenes = allgenes[sample(1:length(allgenes),gsize)]
+      if(!silent)
+        cat("Random genes:",paste0(rgenes,collapse=","),"\n")
       allresults[[i]] = fromJSON(postForm('https://amelie.stanford.edu/api/',verify=F,
                                           genes=paste0(rgenes,collapse=","),
-                                          phenotypes=phenotype))
+                                          phenotypes=paste0(phenotype,collapse=",")))
     }
     return(allresults)
   }
 
-  cat("Calling Amelie now\n")
+  if(!silent)
+    cat("Calling Amelie now\n")
+  #results = readRDS("~/tmp/results.rds")
   results = fromJSON(postForm('https://amelie.stanford.edu/api/',verify=F,
                               genes=paste0(genes,collapse=","),
-                              phenotypes=phenotype))
-  #results = readRDS("~/tmp/results.rds")
-  cat("Done!\n")
+                              phenotypes=paste0(phenotype,collapse=",")))
+  if(!silent)
+    cat("Done!\n")
 
   if(length(results)){
     for(i in 1:length(results)){
       gene = unlist(results[[i]][[1]])
       partial = results[[i]][[2]]
       if(length(partial) >0){
-        partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
+        if(is.null(ncol(partial)))
+          partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
         #print(partial)
         allresults = rbind(allresults,cbind(rep(panel,nrow(partial)),
                                             rep(gene,nrow(partial)),
@@ -338,7 +347,8 @@ annotateWithAmelie = function(ensemble,
   journals = NULL
   result = NULL
   for(index in indexes){
-    cat("From",index,"\n")
+    if(!silent)
+      cat("From",index,"\n")
     ids = paste0(allids[lastindex:index],collapse=",")
     result = c(result,fromJSON(postForm("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",db="pubmed",id=ids,retmode="json"))$result)
     setupids = allids[lastindex:index]
@@ -356,9 +366,8 @@ annotateWithAmelie = function(ensemble,
   }
 
   allresults = cbind(allresults,titles,jnames)
-  print(allresults)
   colnames(allresults) = c("panel","gene","phenotype","confidence","pubmedid","title","journal")
-  return(as.data.frame(allresults,stringsAsFactors=F))
+  return(list(raw=results,annotated=as.data.frame(allresults,stringsAsFactors=F)))
 }
 
 #' How significant are your Amelie annotations?
@@ -392,10 +401,12 @@ annotateWithAmelie = function(ensemble,
 #' @examples
 amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRandom.rds",
                        ameliefile= NULL, #"~/tmp/results.rds",
-                       doplot=F,panel="PD",
+                       doplot=F,
+                       panel="PD",
                        ensemble=NULL,
                        phenotype=NULL,
-                       nNull=100){
+                       nNull=100,
+                       silent=T){
   genecount = NULL
   brutecount = NULL
 
@@ -405,18 +416,20 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
     result = annotateWithAmelie(ensemble=ensemble,
                                 phenotype=phenotype,
                                 getNullDistribution=T,
-                                nNull=nNull)
+                                nNull=nNull,
+                                silent=silent)
   else
     result = readRDS(rndfile)
 
-  if(is.null(ameliefile))
-    result[[length(result) + 1]] = annotateWithAmelie(ensemble=ensemble,
-                                                      phenotype=phenotype,
-                                                      getNullDistribution=F)
+  if(is.null(ameliefile)){
+    goldAmelie = annotateWithAmelie(ensemble=ensemble,
+                                    phenotype=phenotype,
+                                    getNullDistribution=F)
+    result[[length(result) + 1]] = goldAmelie$raw
+  }
+
   else
     result[[length(result) + 1]] = readRDS(ameliefile)
-
-  print(result)
 
   for(j in 1:length(result)){
     results = result[[j]]
@@ -427,8 +440,6 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
       partial = results[[i]][[2]]
 
       if(length(partial) > 1){
-        print("Partial")
-        print(partial)
         if(typeof(partial) != "character")
           partial = t(sapply(partial,function(x){ return(c(x[[1]],x[[2]]))}))[,c(1,2),drop=FALSE]
         #print(partial)
@@ -441,7 +452,7 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
     brutecount = c(brutecount,bcount)
   }
 
-  if(doplot & length(brutecount) > 10){
+  if(doplot & length(brutecount) > 5){
     nrandom = length(genecount) - 1
     par(mfrow=c(1,2))
     xlim=c(min(genecount),max(genecount))
@@ -458,9 +469,7 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
 
   }
   par(mfrow=c(1,1))
-  print("We are going to return this\n")
-  print(result)
-  return(list(gcount=genecount,scorecount=brutecount,result=result))
+  return(list(gcount=genecount,scorecount=brutecount,result=result,gold=goldAmelie))
 }
 
 #' Title Still under development

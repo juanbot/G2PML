@@ -26,6 +26,8 @@ ensembleLearnKFold = function(panel="Congenital_myopathy",
                                         "svmRadial",
                                         "rf",
                                         "sparseLDA",
+                                        "lda",
+                                        "bayesglm",
                                         "kknn",
                                         "naive_bayes"),
                               k=5,
@@ -877,7 +879,7 @@ ensemblePredict = function(genes,
       localpred = vector(mode="character",length=length(numpred))
       localpred[numpred > 0.5] = "Disease"
       localpred[numpred <= 0.5] = "Nondisease"
-    }else if(method %in% c("C5.0Tree","rpart","C5.0","naive_bayes","rf","J48")){
+    }else if(method %in% c("C5.0Tree","rpart","C5.0","naive_bayes","rf","J48","knn")){
       localpred = as.character(predict(model,newdata=data.in,type="class"))
     }else if (method %in% c("kknn","svmRadial")){
       library(kernlab)
