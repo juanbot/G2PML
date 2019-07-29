@@ -47,12 +47,14 @@ featureSelection = function(genes=NULL,
                             k=5,
                             controls="allgenome",
                             trnProp=0.8,
-                            repeats=10){
+                            repeats=10,
+                            filter=NULL){
 
   allgenes = genes
   cat("We'll work with",length(allgenes),"disease genes\n")
   mldata = fromGenes2MLData(genes=allgenes,
-                            which.controls=controls)
+                            which.controls=controls,
+                            filter=filter)
   mask = !(colnames(mldata) %in% c("gene","condition"))
 
   mldata[,mask] = scale(mldata[,mask])
@@ -70,10 +72,10 @@ featureSelection = function(genes=NULL,
     lmldata$gene = NULL
     lmldata$condition = NULL
 
-    nzv = nearZeroVar(lmldata, saveMetrics= TRUE)
+    nzv = caret::nearZeroVar(lmldata, saveMetrics= TRUE)
     lmldata = lmldata[,!nzv$zeroVar]
     descrCor = cor(lmldata) # builds correlation matrix
-    highlyCorDescr = findCorrelation(descrCor, cutoff = .9,
+    highlyCorDescr = caret::findCorrelation(descrCor, cutoff = .9,
                                        names = T, verbose = F)
     lmldata = lmldata[,!(colnames(lmldata) %in% highlyCorDescr)]
 

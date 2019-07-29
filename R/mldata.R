@@ -43,7 +43,7 @@ generateMLDB = function(handlers=dataHandlerMethods()){
   return(dataft)
 }
 
-generateMLDBByGene = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
+generateMLDBByGene = function(casecontrolset,
                               handlers=dataHandlerMethods(),
                               filter=NULL){
 
@@ -1077,7 +1077,7 @@ fromGenes2MLData = function(genes,
 }
 
 
-genLearningDataSet = function(casecontrolset=getCaseControlSet(which.ones="ge_neurogenes"),
+genLearningDataSet = function(casecontrolset,
                               sep="\t",
                               filter=NULL,
                               silent=T,

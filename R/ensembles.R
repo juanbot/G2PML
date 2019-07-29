@@ -1349,6 +1349,7 @@ milkEnsemble = function(ensemble,
                         cutoff=0.9,
                         remove=NULL,
                         trees=-1){
+
   if(!is.null(ensemble$model)){
     if(trees < 0 | trees > length(ensemble$model))
       trees = length(ensemble$model)
@@ -1371,6 +1372,10 @@ milkEnsemble = function(ensemble,
     ensemble$preds$quality = ensemble$preds$quality[genemask]
   }
   return(ensemble$preds$genes[ensemble$preds$quality >= cutoff])
+}
+
+getPredictedGenes = function(ens,q){
+  return(ens$allpredictions$gene[ens$allpredictions$quality >= q])
 }
 
 getHits = function(panel,genes,

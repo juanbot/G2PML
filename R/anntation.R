@@ -275,9 +275,10 @@ annotateWithAmelie = function(ensemble,
                               phenotype="HP:0001300",
                               getNullDistribution=F,
                               nNull=100,
-                              silent=T){
+                              silent=T,
+                              q=1){
   panel = ensemble$models[[1]]$panel
-  genes = ensemble$finalpreds
+  genes = ensemble$allpredictions$gene[ensemble$allpredictions$quality == q]
   allresults = NULL
   if(!silent)
     cat("Working with",panel,"\n")
@@ -401,7 +402,6 @@ annotateWithAmelie = function(ensemble,
 #' @examples
 amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRandom.rds",
                        ameliefile= NULL, #"~/tmp/results.rds",
-                       doplot=F,
                        panel="PD",
                        ensemble=NULL,
                        phenotype=NULL,
@@ -426,9 +426,7 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
                                     phenotype=phenotype,
                                     getNullDistribution=F)
     result[[length(result) + 1]] = goldAmelie$raw
-  }
-
-  else
+  }else
     result[[length(result) + 1]] = readRDS(ameliefile)
 
   for(j in 1:length(result)){
@@ -452,24 +450,35 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
     brutecount = c(brutecount,bcount)
   }
 
-  if(doplot & length(brutecount) > 5){
+
+  return(list(gcount=genecount,scorecount=brutecount,result=result,gold=goldAmelie))
+}
+
+ameliePlot = function(results,panel=""){
+  brutecount = results$scorecount
+  genecount = results$gcount
+
+  if(length(brutecount) > 5){
     nrandom = length(genecount) - 1
-    par(mfrow=c(1,2))
+    oldpar = par(mfrow=c(1,2))
     xlim=c(min(genecount),max(genecount))
+    pval = (1 + sum(genecount[1:nrandom] > genecount[nrandom + 1]))/(1 + nrandom)
+
     plot(density(genecount[1:nrandom]),xlab="Hits (gene, phenotype) found",
-         main=paste0("Do we get more ",panel," hits?"),
+         main=paste0("Hits ",panel,", n=",nrandom,",P < ",signif(pval,3)),
          cex=0.8,xlim=xlim)
     abline(v=genecount[nrandom + 1],col="red")
 
+    pval = (1 + sum(brutecount[1:nrandom]/genecount[1:nrandom] >
+                    brutecount[nrandom + 1]/genecount[nrandom + 1]))/(1 + nrandom)
     plot(density(brutecount[1:nrandom]/genecount[1:nrandom]),
          xlab="Mean score per hit",
-         main=paste0("Are ",panel," hits of better quality?"),
+         main=paste0("Amelie scores for hits ",panel,",P < ",signif(pval,3)),
          cex=0.8)
     abline(v=brutecount[nrandom + 1]/genecount[nrandom + 1],col="red")
-
+    par(oldpar)
   }
-  par(mfrow=c(1,1))
-  return(list(gcount=genecount,scorecount=brutecount,result=result,gold=goldAmelie))
+
 }
 
 #' Title Still under development
