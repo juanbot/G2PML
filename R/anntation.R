@@ -276,9 +276,15 @@ annotateWithAmelie = function(ensemble,
                               getNullDistribution=F,
                               nNull=100,
                               silent=T,
-                              q=1){
-  panel = ensemble$models[[1]]$panel
-  genes = ensemble$allpredictions$gene[ensemble$allpredictions$quality == q]
+                              q=1,
+                              genes=NULL,
+                              panel="Not Specified"){
+  stopifnot(!is.null(ensemble) | ! is.null(genes))
+
+  if(is.null(genes)){
+    panel = ensemble$models[[1]]$panel
+    genes = ensemble$allpredictions$gene[ensemble$allpredictions$quality == q]
+  }
   allresults = NULL
   if(!silent)
     cat("Working with",panel,"\n")
@@ -406,25 +412,31 @@ amelieStudy = function(rndfile = NULL, #"~/Dropbox/KCL/talks/nih2019/pdAmelieRan
                        ensemble=NULL,
                        phenotype=NULL,
                        nNull=100,
-                       silent=T){
+                       silent=T,
+                       genes=NULL
+                       ){
   genecount = NULL
   brutecount = NULL
 
-  stopifnot(!is.null(rndfile) | !is.null(ensemble))
+  stopifnot(!is.null(rndfile) | !is.null(ensemble) | !is.null(genes))
 
   if(is.null(rndfile))
     result = annotateWithAmelie(ensemble=ensemble,
                                 phenotype=phenotype,
                                 getNullDistribution=T,
                                 nNull=nNull,
-                                silent=silent)
+                                silent=silent,
+                                genes=genes,panel=panel)
   else
     result = readRDS(rndfile)
 
   if(is.null(ameliefile)){
     goldAmelie = annotateWithAmelie(ensemble=ensemble,
                                     phenotype=phenotype,
-                                    getNullDistribution=F)
+                                    getNullDistribution=F,
+                                    silent=silent,
+                                    genes=genes,panel=panel)
+
     result[[length(result) + 1]] = goldAmelie$raw
   }else
     result[[length(result) + 1]] = readRDS(ameliefile)
@@ -471,11 +483,14 @@ ameliePlot = function(results,panel=""){
 
     pval = (1 + sum(brutecount[1:nrandom]/genecount[1:nrandom] >
                     brutecount[nrandom + 1]/genecount[nrandom + 1]))/(1 + nrandom)
-    plot(density(brutecount[1:nrandom]/genecount[1:nrandom]),
+    z = brutecount[nrandom + 1]/genecount[nrandom + 1]
+    thenull = brutecount[1:nrandom]/genecount[1:nrandom]
+    xlim=c(min(thenull,z),max(thenull,z))
+    plot(density(thenull),
          xlab="Mean score per hit",
          main=paste0("Amelie scores for hits ",panel,",P < ",signif(pval,3)),
-         cex=0.8)
-    abline(v=brutecount[nrandom + 1]/genecount[nrandom + 1],col="red")
+         cex=0.8,xlim=xlim)
+    abline(v=z,col="red")
     par(oldpar)
   }
 

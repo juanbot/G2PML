@@ -28,7 +28,8 @@
 #'   each iteration, \code{featureSelection} will compute rfe on an random
 #'   proportion (trnProp) of disease genes and a random size-matched set of
 #'   controls.
-#' @param gacontrols
+#' @param filter Useful for removing ML data features from the analysis. Is a vector of Strings
+#'
 #'
 #' @return list of length repeats. Each element contains an rfe class object
 #'   fitted for a set of randomly sampled disease and control genes.
