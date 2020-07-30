@@ -1,5 +1,30 @@
 
 
+setDBFile = function(newfile=NULL){
+  if(is.null(newfile)){
+    g2pmlfilein <<- paste0(system.file("g2pml/", "", package = "G2PML"),
+                  "mlDBMarch2019.txt.zip")
+    return(TRUE)
+  }
+  if(!file.exists(newfile)){
+    cat("The file",newfile,"can't be found\n")
+    cat("We'll keep using",g2pmlfilein,"\n")
+    return(FALSE)
+  }
+  datain = read.table(newfile,stringsAsFactors=F,
+                      sep="\t",header=T)
+  cat("File",newfile,"has",nrow(datain),"genes and",ncol(datain),
+      "features\n")
+  g2pmlfilein <<- newfile
+  return(TRUE)
+}
+
+getDBFile = function(){
+  if(!exists("g2pmlfilein"))
+    setDBFile()
+  return(g2pmlfilein)
+}
+
 #' Title
 #'
 #' @param atts
@@ -1083,11 +1108,15 @@ genLearningDataSet = function(casecontrolset,
                               silent=T,
                               newdata=T){
 
-  f.in = paste0(system.file("g2pml/", "", package = "G2PML"),
-                "mlDBMarch2019.txt.zip")
-
+  f.in = getDBFile()
   genes = casecontrolset$gene
-  mldata = read.delim(unz(f.in,"mlDBMarch2019.txt"),stringsAsFactors=F,sep="\t")
+  cat("Reading raw learning data from",f.in,"\n")
+  if(length(grep("\\.zip$",f.in)) > 0)
+    mldata = read.delim(unz(f.in,gsub("\\.zip$","",f.in)),
+                        stringsAsFactors=F,sep="\t",header=T)
+  else
+    mldata = read.delim(f.in,
+                        stringsAsFactors=F,sep="\t",header=T)
   mask = match(genes,mldata$gene)
   nulls = sum(is.na(mask))
   if(nulls > 0){
